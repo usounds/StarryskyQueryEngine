@@ -5,10 +5,17 @@ import {
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
 import dotenv from 'dotenv'
 import { BskyAgent } from '@atproto/api'
-import { QueryParams as QueryParamsAuthors } from '@atproto/api/dist/client/types/app/bsky/unspecced/searchActorsSkeleton'
-import { QueryParams as QueryParamsFeeds } from './lexicon/types/app/bsky/feed/getAuthorFeed'
+import { QueryParams as QueryParamsSearch } from './lexicon/types/app/bsky/feed/searchPosts'
 import { Database } from './db'
-import { ProfileView } from '@atproto/api/dist/client/types/app/bsky/actor/defs'
+import { ConnectionBuilder } from 'kysely'
+import {PostView } from './lexicon/types/app/bsky/feed/defs'
+
+interface record {
+  createdAt: string,
+  text?:string,
+  langs?:String[],
+  reply:{}
+}
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
   async handleEvent(evt: RepoEvent) {
@@ -78,54 +85,97 @@ export class ScpecificActorsSubscription {
       password: process.env.FEEDGEN_APP_PASSWORD || ''
     })
 
-    // プロフィール検索
-    // searchActorsがOR検索に対応してないので、QUERYを分割検索し最後に結果を結合
-    let actors_arr: ProfileView[] = []
-    const q_arr = process.env.FEEDGEN_QUERY?.split(' ')
-    if (!q_arr) {
-      console.error("query parameter is null!")
-      return
-    }
-    for (let q of q_arr) {
-      const params_actors:QueryParamsAuthors = {
-        q: q,
-        limit: 100
-      }
-      const { data: data_actors } = await this.agent.searchActors(params_actors)
-      actors_arr.push(...data_actors.actors)
-    }
-    // 検索して見つかった全ユーザに対して実行
-    for (let actor of actors_arr) {
-      console.log(actor.description)
-      // ポスト取得
-      const params_feed:QueryParamsFeeds = {
-        actor: actor.did,
+    const query =  process.env.FEEDGEN_QUERY || ''
+    const inputRegex  = process.env.FEEDGEN_INPUT_REGEX || ''
+    const inviteRegex = process.env.FEEDGEN_INVERT_REGEX || ''
+    const label = process.env.FEEDGEN_LABEL_DISABLE || ''
+    const reply = process.env.FEEDGEN_REPLY_DISABLE || ''
+    const lang  = process.env.FEEDGEN_LANG?.split(',')
+    const deepDive = Number(process.env.FEEDGEN_DEEP_DIVE||1)
+    const interval = Number(process.env.FEEDGEN_CRON_INTERVAL||10)
+
+    if(query==='')       console.log('FEEDGEN_QUERY is null.')
+    if(inputRegex==='')  console.log('FEEDGEN_INPUT_REGEX is null.')
+    if(inviteRegex==='') console.log('FEEDGEN_INVERT_REGEX is null.')
+    if(label==="")       console.log('FEEDGEN_LABEL is not set.')
+    if(reply==="")       console.log('FEEDGEN_REPLY_DISABLE is not set.')
+    if(deepDive === 0)   console.log('FEEDGEN_DEEP_DIVE is null. Set default value 1.')
+    if(lang === undefined || lang[0]=='')  console.log('FEEDGEN_LANG is null.')
+
+    let posts:PostView[] = []
+
+    let cursor = 0
+
+    for (let i:number = 0; i < deepDive && cursor%100==0; i++) {
+      const params_search:QueryParamsSearch = {
+        q: query,
         limit: 100,
-        filter: 'posts_no_replies'
+        cursor: String(cursor)
       }
-      const { data: data_feed } = await this.agent.getAuthorFeed(params_feed)
-      const { feed: postsArray, cursor: nextPage } = data_feed
-      for (let post of postsArray) {
-        console.log(post.post.record)
-        // DB格納
-        const postsToCreate = {
-          uri: post.post.uri,
-          cid: post.post.cid,
-          // indexedAt: new Date().toISOString(),
-          indexedAt: post.post.indexedAt
-        }
-        await this.db
-          .insertInto('post')
-          .values(postsToCreate)
-          .onConflict(oc => oc.doNothing())
-          .execute()
-        rowcount++
+      const seachResults = await this.agent.api.app.bsky.feed.searchPosts(params_search)
+
+      posts.push(...seachResults.data.posts)
+      cursor = Number(seachResults.data.cursor)
+   }
+  
+    let recordcount = 0;
+
+    for(let post of posts){
+      const record = post.record as record
+      //INPUTにマッチしないものは除外
+      if(record.text?.toLowerCase().match(inputRegex)){
+        continue;
       }
-      console.log(rowcount)
+
+      //Invertにマッチしたものは除外
+      if(record.text?.toLowerCase().match(inviteRegex)){
+        continue;
+      }
+
+      //言語フィルターが有効化されているか
+      if(lang !== undefined && lang[0]!=="") {
+        //投稿の言語が未設定の場合は除外
+        if(record.langs===undefined) continue;
+        //言語が一致しない場合は除外
+        if(!getIsDuplicate(record.langs,lang)) continue;
+      }
+        //&& record.langs!== undefined &&  !getIsDuplicate(record.langs,lang)){
+       // continue;
+
+      //ラベルが有効な場合は、ラベルが何かついていたら除外
+      if(label === "true" && post.labels?.length !== 0){
+        continue;
+      }
+
+      //リプライ無効の場合は、リプライを除外
+      if(reply === "true" && record.reply!==undefined){
+        continue;
+      }
+
+      console.log(record.text)
+      rowcount++
+
+      const postsToCreate = {
+        uri: post.uri,
+        cid: post.cid,
+        // indexedAt: new Date().toISOString(),
+        indexedAt: record.createdAt
+      }
+      await this.db
+        .insertInto('post')
+        .values(postsToCreate)
+        .onConflict(oc => oc.doNothing())
+        .execute()
     }
+
+    console.log('count:' + rowcount)
   }
 
   intervalId = setInterval(async () => {
     await this.reload()
-  }, 10*60*1000) // 10m
+  }, Number(process.env.FEEDGEN_CRON_INTERVAL||10)*60*1000) // 10m
+}
+
+function getIsDuplicate(arr1, arr2) {
+  return [...arr1, ...arr2].filter(item => arr1.includes(item) && arr2.includes(item)).length > 0
 }
