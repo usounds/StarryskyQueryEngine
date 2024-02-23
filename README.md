@@ -1,4 +1,4 @@
-# Strrysky
+# Starrysky
 
 You can set up a custom feed server using Render.com or selfhost.
 
