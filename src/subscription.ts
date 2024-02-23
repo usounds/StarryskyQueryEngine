@@ -90,19 +90,22 @@ export class ScpecificActorsSubscription {
     }
 
     const query =  process.env.FEEDGEN_QUERY || ''
-    const inputRegex  = process.env.FEEDGEN_INPUT_REGEX || ''
-    const inviteRegex = process.env.FEEDGEN_INVERT_REGEX || ''
+    let inputRegex  = process.env.FEEDGEN_INPUT_REGEX || ''
+    let inviteRegex = process.env.FEEDGEN_INVERT_REGEX || ''
     const label = process.env.FEEDGEN_LABEL_DISABLE || ''
     const reply = process.env.FEEDGEN_REPLY_DISABLE || ''
     const lang  = process.env.FEEDGEN_LANG?.split(',')
     const deepDive = Number(process.env.FEEDGEN_DEEP_DIVE||1)
+
+    inputRegex = inputRegex.toLowerCase()
+    inviteRegex = inviteRegex.toLowerCase()
 
     if(query==='')       console.log('FEEDGEN_QUERY is null.')
     if(inputRegex==='')  console.log('FEEDGEN_INPUT_REGEX is null.')
     if(inviteRegex==='') console.log('FEEDGEN_INVERT_REGEX is null.')
     if(label==="")       console.log('FEEDGEN_LABEL is not set.')
     if(reply==="")       console.log('FEEDGEN_REPLY_DISABLE is not set.')
-    if(deepDive === 0)   console.log('FEEDGEN_DEEP_DIVE is null. Set default value 1.')
+    if(deepDive === 1)   console.log('FEEDGEN_DEEP_DIVE is default value 1.')
     if(lang === undefined || lang[0]=='')  console.log('FEEDGEN_LANG is null.')
 
     let posts:PostView[] = []
@@ -126,7 +129,7 @@ export class ScpecificActorsSubscription {
     for(let post of posts){
       const record = post.record as record
       //INPUTにマッチしないものは除外
-      if(record.text?.toLowerCase().match(inputRegex)){
+      if(!record.text?.toLowerCase().match(inputRegex)){
         continue;
       }
 
