@@ -101,6 +101,7 @@ export class ScpecificActorsSubscription {
     const reply = process.env.FEEDGEN_REPLY_DISABLE || ''
     //const alt   = process.env.FEEDGEN_INCLUDE_ALTTEXT || ''
     const image = process.env.FEEDGEN_IMAGE_ONLY || ''
+    const initCount = Number(process.env.FEEDGEN_INIT_POSTS || 1000)
     const lang  = process.env.FEEDGEN_LANG?.split(',')
 
     if(query==='')       console.log('FEEDGEN_QUERY is null.')
@@ -131,7 +132,7 @@ export class ScpecificActorsSubscription {
 
     let posts:PostView[] = []
     let cursor = 0
-    while (((!init && !catchUp) || (init && recordcount<1000)) && cursor%100==0) {
+    while (((!init && !catchUp) || (init && recordcount<initCount)) && cursor%100==0) {
       const params_search:QueryParamsSearch = {
         q: query,
         limit: 100,
@@ -148,9 +149,9 @@ export class ScpecificActorsSubscription {
         
         //前回実行分に追いついた
         if(storedPost.includes(post.uri)){
-          if(!catchUp)console.log('Catch up finished. URI:'+post.uri)
+          console.log('Catch up finished. URI:'+post.uri)
           catchUp = true
-          continue
+          break
         }
 
         const record = post.record as record
