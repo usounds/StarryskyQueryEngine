@@ -80,10 +80,14 @@ export class ScpecificActorsSubscription {
 
     // Bearer取得
     dotenv.config()
-    await this.agent.login({
-      identifier: process.env.FEEDGEN_PUBLISHER_IDENTIFIER || '',
-      password: process.env.FEEDGEN_APP_PASSWORD || ''
-    })
+
+    //セッション永続
+    if(!this.agent.hasSession){
+      await this.agent.login({
+        identifier: process.env.FEEDGEN_PUBLISHER_IDENTIFIER || '',
+        password: process.env.FEEDGEN_APP_PASSWORD || ''
+      })
+    }
 
     const query =  process.env.FEEDGEN_QUERY || ''
     const inputRegex  = process.env.FEEDGEN_INPUT_REGEX || ''
@@ -92,7 +96,6 @@ export class ScpecificActorsSubscription {
     const reply = process.env.FEEDGEN_REPLY_DISABLE || ''
     const lang  = process.env.FEEDGEN_LANG?.split(',')
     const deepDive = Number(process.env.FEEDGEN_DEEP_DIVE||1)
-    const interval = Number(process.env.FEEDGEN_CRON_INTERVAL||10)
 
     if(query==='')       console.log('FEEDGEN_QUERY is null.')
     if(inputRegex==='')  console.log('FEEDGEN_INPUT_REGEX is null.')
