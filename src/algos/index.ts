@@ -3,12 +3,12 @@ import {
   QueryParams,
   OutputSchema as AlgoOutput,
 } from '../lexicon/types/app/bsky/feed/getFeedSkeleton'
-import * as StarrySky from './StarrySky'
+import * as starrysky from './starrysky'
 
 type AlgoHandler = (ctx: AppContext, params: QueryParams) => Promise<AlgoOutput>
 
 const algos: Record<string, AlgoHandler> = {
-  [StarrySky.shortname]: StarrySky.handler,
+  [starrysky.shortname]: starrysky.handler,
 }
 
 export default algos

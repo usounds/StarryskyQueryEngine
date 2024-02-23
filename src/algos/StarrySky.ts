@@ -3,7 +3,7 @@ import { QueryParams } from '../lexicon/types/app/bsky/feed/getFeedSkeleton'
 import { AppContext } from '../config'
 
 // max 15 chars
-export const shortname = 'StarrySky'
+export const shortname = 'starrysky'
 
 export const handler = async (ctx: AppContext, params: QueryParams) => {
   let builder = ctx.db
