@@ -5,8 +5,6 @@ import { BskyAgent } from '@atproto/api'
 const run = async () => {
   dotenv.config()
 
-  console.log('qqqq')
-
   let bskyAge = new BskyAgent({
     service: 'https://bsky.social'
   })
