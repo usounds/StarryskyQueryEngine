@@ -102,7 +102,6 @@ export class ScpecificActorsSubscription {
     //const alt   = process.env.FEEDGEN_INCLUDE_ALTTEXT || ''
     const image = process.env.FEEDGEN_IMAGE_ONLY || ''
     const lang  = process.env.FEEDGEN_LANG?.split(',')
-    let deepDive = Number(process.env.FEEDGEN_DEEP_DIVE||1)
 
     if(query==='')       console.log('FEEDGEN_QUERY is null.')
     if(process.env.FEEDGEN_INPUT_REGEX  ==='') console.log('FEEDGEN_INPUT_REGEX is null.')
@@ -111,20 +110,28 @@ export class ScpecificActorsSubscription {
     if(reply==="")       console.log('FEEDGEN_REPLY_DISABLE is not set.')
     //if(alt==="")         console.log('FEEDGEN_INCLUDE_ALTTEXT is not set.')
     if(image==="")       console.log('FEEDGEN_IMAGE_ONLY is not set.')
-    if(deepDive === 1)   console.log('FEEDGEN_DEEP_DIVE is default value 1.')
     if(lang === undefined || lang[0]=='')  console.log('FEEDGEN_LANG is null.')
 
-    //現在のDBの登録値が0件の場合は2倍働く
     let builder = this.db
-    .selectFrom('post')
-    .selectAll()
+      .selectFrom('post')
+      .selectAll()
+      .orderBy('indexedAt', 'desc')
     const res = await builder.execute()
+    const storedPost = res.map((subsc) => subsc.uri)
+    let init = false
+    let catchUp = false
 
-    if(res.length===0) deepDive = deepDive * 2
+    if(res.length===0){
+      init = true
+      console.log('Initial job run.')
+    }else{
+      console.log('Delta job run. Current post count:'+res.length)
+    }
+    let recordcount = 0;
 
     let posts:PostView[] = []
     let cursor = 0
-    for (let i:number = 0; i < deepDive && cursor%100==0; i++) {
+    while (((!init && !catchUp) || (init && recordcount<1000)) && cursor%100==0) {
       const params_search:QueryParamsSearch = {
         q: query,
         limit: 100,
@@ -132,15 +139,22 @@ export class ScpecificActorsSubscription {
       }
       const seachResults = await this.agent.api.app.bsky.feed.searchPosts(params_search)
 
-      posts.push(...seachResults.data.posts)
+ //     posts.push(...seachResults.data.posts)
       cursor = Number(seachResults.data.cursor)
-   }
-  
-    let recordcount = 0;
+      console.log('API cursor:'+cursor)
+      console.log('Cuptured:'+recordcount)
 
-    for(let post of posts){
-      const record = post.record as record
-      let text = record.text || ''
+      for(let post of seachResults.data.posts){
+        
+        //前回実行分に追いついた
+        if(storedPost.includes(post.uri)){
+          if(!catchUp)console.log('Catch up finished. URI:'+post.uri)
+          catchUp = true
+          continue
+        }
+
+        const record = post.record as record
+        let text = record.text || ''
 
       /* 検索APIがALT TEXTの検索ができないので削除
       if(alt === "true" && record.embed !== undefined && record.embed.images !== undefined){
@@ -150,57 +164,56 @@ export class ScpecificActorsSubscription {
       }
       */
 
-      //INPUTにマッチしないものは除外
-      if(!text.match(inputRegex)){
-        continue;
-      }
+        //INPUTにマッチしないものは除外
+        if(!text.match(inputRegex)){
+          continue
+        }
 
-      //Invertにマッチしたものは除外
-      if(process.env.FEEDGEN_INVERT_REGEX !== undefined && text.match(inviteRegex)){
-        continue;
-      }
+        //Invertにマッチしたものは除外
+        if(process.env.FEEDGEN_INVERT_REGEX !== undefined && text.match(inviteRegex)){
+          continue
+        }
 
-      //画像フィルタ
-      if(image === 'true' && (record.embed === undefined || record.embed.images === undefined) ){
-        continue;
-      }
+        //画像フィルタ
+        if(image === 'true' && record.embed?.images === undefined ){
+          continue
+        }
 
-      //言語フィルターが有効化されているか
-      if(lang !== undefined && lang[0]!=="") {
-        //投稿の言語が未設定の場合は除外
-        if(record.langs===undefined) continue;
-        //言語が一致しない場合は除外
-        if(!getIsDuplicate(record.langs,lang)) continue;
-      }
+        //言語フィルターが有効化されているか
+        if(lang !== undefined && lang[0]!=="") {
+          //投稿の言語が未設定の場合は除外
+          if(record.langs===undefined) continue
+          //言語が一致しない場合は除外
+          if(!getIsDuplicate(record.langs,lang)) continue
+        }
 
-      //ラベルが有効な場合は、ラベルが何かついていたら除外
-      if(label === "true" && post.labels?.length !== 0){
-        continue;
-      }
+        //ラベルが有効な場合は、ラベルが何かついていたら除外
+        if(label === "true" && post.labels?.length !== 0){
+          continue
+        }
 
-      //リプライ無効の場合は、リプライを除外
-      if(reply === "true" && record.reply!==undefined){
-        continue;
-      }
+        //リプライ無効の場合は、リプライを除外
+        if(reply === "true" && record.reply!==undefined){
+          continue
+        }
 
-      console.log('対象になった')
-      console.log(text)
-      rowcount++
+        recordcount++
 
-      const postsToCreate = {
-        uri: post.uri,
-        cid: post.cid,
-        // indexedAt: new Date().toISOString(),
-        indexedAt: record.createdAt
+        const postsToCreate = {
+          uri: post.uri,
+          cid: post.cid,
+          // indexedAt: new Date().toISOString(),
+          indexedAt: record.createdAt
+        }
+        await this.db
+          .insertInto('post')
+          .values(postsToCreate)
+          .onConflict(oc => oc.doNothing())
+          .execute()
       }
-      await this.db
-        .insertInto('post')
-        .values(postsToCreate)
-        .onConflict(oc => oc.doNothing())
-        .execute()
     }
 
-    console.log('count:' + rowcount)
+    console.log('Fetch job finished. Current job captured:' + recordcount)
   }
 
   intervalId = setInterval(async () => {
