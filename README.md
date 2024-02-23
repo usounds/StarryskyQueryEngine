@@ -1,6 +1,6 @@
 # Strrysky
 
-You can set up a custom feed server using Selfhost or Render.com
+You can set up a custom feed server using Render.com or selfhost.
 
 ## Usage
 
