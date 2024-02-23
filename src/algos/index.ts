@@ -3,12 +3,12 @@ import {
   QueryParams,
   OutputSchema as AlgoOutput,
 } from '../lexicon/types/app/bsky/feed/getFeedSkeleton'
-import * as ff14use from './ff14use'
+import * as whatsAlf from './whats-alf'
 
 type AlgoHandler = (ctx: AppContext, params: QueryParams) => Promise<AlgoOutput>
 
 const algos: Record<string, AlgoHandler> = {
-  [ff14use.shortname]: ff14use.handler,
+  [whatsAlf.shortname]: whatsAlf.handler,
 }
 
 export default algos
