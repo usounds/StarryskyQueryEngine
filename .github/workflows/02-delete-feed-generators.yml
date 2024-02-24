@@ -1,0 +1,32 @@
+name: 2. Delete Feed Generators
+run-name: Delete Feed Generators
+
+on:
+  workflow_dispatch:
+    inputs:
+        blueskyHandle:
+          description: "Bluesky handle(ex.xxxx.bsky.social)"
+          required: true
+        blueskyAppPassword:
+            description: "App Password"
+            required: true
+
+jobs:
+  publish_feed_generators:
+    runs-on: ubuntu-latest
+    name: Publish Feed Generators
+    steps:
+      - name: Mask Password
+        run: |
+          FEEDGEN_APP_PASSWORD=$(jq -r '.inputs.blueskyAppPassword' $GITHUB_EVENT_PATH)
+          echo ::add-mask::$FEEDGEN_APP_PASSWORD
+          echo FEEDGEN_APP_PASSWORD=$FEEDGEN_APP_PASSWORD >> $GITHUB_ENV
+          FEEDGEN_PUBLISHER_IDENTIFIER=$(jq -r '.inputs.blueskyHandle' $GITHUB_EVENT_PATH)
+          echo ::add-mask::$FEEDGEN_PUBLISHER_IDENTIFIER
+          echo FEEDGEN_PUBLISHER_IDENTIFIER=$FEEDGEN_PUBLISHER_IDENTIFIER >> $GITHUB_ENV
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - name: Publish Feed Generators
+        run: |
+          npm install
+          yarn deleteFeed
