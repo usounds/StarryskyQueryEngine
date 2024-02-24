@@ -12,9 +12,9 @@ on:
             required: true
 
 jobs:
-  publish_feed_generators:
+  delete_feed_generators:
     runs-on: ubuntu-latest
-    name: Publish Feed Generators
+    name: Delete Feed Generators
     steps:
       - name: Mask Password
         run: |
@@ -26,7 +26,7 @@ jobs:
           echo FEEDGEN_PUBLISHER_IDENTIFIER=$FEEDGEN_PUBLISHER_IDENTIFIER >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - name: Publish Feed Generators
+      - name: Delete Feed Generators
         run: |
           npm install
           yarn deleteFeed
