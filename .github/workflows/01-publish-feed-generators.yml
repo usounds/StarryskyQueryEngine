@@ -43,7 +43,9 @@ jobs:
           echo ::add-mask::$FEEDGEN_PUBLISHER_IDENTIFIER
           echo FEEDGEN_PUBLISHER_IDENTIFIER=$FEEDGEN_PUBLISHER_IDENTIFIER >> $GITHUB_ENV
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
       - name: Publish Feed Generators
         run: |
           npm install
