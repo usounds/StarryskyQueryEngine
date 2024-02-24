@@ -6,7 +6,7 @@ on:
     inputs:
         renderServer:
             description: "Server name without https (ex.ss-usounds.onrender.com)"
-            required: false
+            required: true
         blueskyHandle:
           description: "Bluesky handle(ex.xxxx.bsky.social)"
           required: true
