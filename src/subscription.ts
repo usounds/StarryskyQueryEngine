@@ -81,9 +81,6 @@ export class ScpecificActorsSubscription {
   }
 
   async reload() {
-    let rowcount = 0;
-
-    // Bearer取得
     dotenv.config()
 
     //ログイン
@@ -94,25 +91,28 @@ export class ScpecificActorsSubscription {
       })
     }
 
-    const query =  process.env.FEEDGEN_QUERY || ''
-    const inputRegex  = new RegExp( process.env.FEEDGEN_INPUT_REGEX || '','i')
-    const inviteRegex = new RegExp( process.env.FEEDGEN_INVERT_REGEX || '','i')
-    const label = process.env.FEEDGEN_LABEL_DISABLE || ''
-    const reply = process.env.FEEDGEN_REPLY_DISABLE || ''
-    //const alt   = process.env.FEEDGEN_INCLUDE_ALTTEXT || ''
-    const image = process.env.FEEDGEN_IMAGE_ONLY || ''
-    const initCount = Number(process.env.FEEDGEN_INIT_POSTS || 1000)
-    const lang  = process.env.FEEDGEN_LANG?.split(',')
+    const query  = process.env.FEEDGEN_QUERY || ''            //Bluesky検索API向けクエリ
+    const label  = process.env.FEEDGEN_LABEL_DISABLE || ''    //センシティブラベル付き投稿表示制御用フラグ
+    const reply  = process.env.FEEDGEN_REPLY_DISABLE || ''    //リプライ表示抑制用フラグ
+    const alt    = process.env.FEEDGEN_INCLUDE_ALTTEXT || ''  //画像のALT文字列検索可否フラグ
+    const image  = process.env.FEEDGEN_IMAGE_ONLY || ''       //画像のみ抽出フラグ
+    const lang   = process.env.FEEDGEN_LANG?.split(',')       //言語フィルタ用配列
+    //const profiles = process.env.FEEDGEN_PROFILE_REGEX?.split(',')        //言語フィルタ用配列
+    const inputRegex  = new RegExp( process.env.FEEDGEN_INPUT_REGEX || '','i')  //抽出正規表現
+    const inviteRegex = new RegExp( process.env.FEEDGEN_INVERT_REGEX || '','i') //除外用正規表現
+    const initCount = Number(process.env.FEEDGEN_INIT_POSTS || 1000)  //初期起動時の読み込み件数
 
     if(query==='')       console.log('FEEDGEN_QUERY is null.')
     if(process.env.FEEDGEN_INPUT_REGEX  ==='') console.log('FEEDGEN_INPUT_REGEX is null.')
     if(process.env.FEEDGEN_INVERT_REGEX ==='') console.log('FEEDGEN_INVERT_REGEX is null.')
     if(label==="")       console.log('FEEDGEN_LABEL is not set.')
     if(reply==="")       console.log('FEEDGEN_REPLY_DISABLE is not set.')
-    //if(alt==="")         console.log('FEEDGEN_INCLUDE_ALTTEXT is not set.')
+    if(alt==="")         console.log('FEEDGEN_INCLUDE_ALTTEXT is not set.')
     if(image==="")       console.log('FEEDGEN_IMAGE_ONLY is not set.')
-    if(lang === undefined || lang[0]=='')  console.log('FEEDGEN_LANG is null.')
+    if(lang === undefined|| lang[0]=='')     console.log('FEEDGEN_LANG is null.')
+    //if(profiles === undefined || profiles[0]=='')  console.log('FEEDGEN_PROFILE_REGEX is null.')
 
+    //保存されている全投稿取得
     let builder = this.db
       .selectFrom('post')
       .selectAll()
@@ -122,17 +122,24 @@ export class ScpecificActorsSubscription {
     let init = false
     let catchUp = false
 
+    //件数ゼロなら初回起動モード
     if(res.length===0){
       init = true
       console.log('Initial job run.')
+    //1件でも入っていれば差分起動モード
     }else{
       console.log('Delta job run. Current post count:'+res.length)
     }
-    let recordcount = 0;
 
+    let recordcount = 0;
     let posts:PostView[] = []
     let cursor = 0
-    while (((!init && !catchUp) || (init && recordcount<initCount)) && cursor%100==0) {
+
+    //初回起動モードは既定の件数まで処理を継続
+    //差分起動モードは前回の実行に追いつくまで処理を継続
+    //ただし、API検索が100回に到達する、または、APIの検索が終了した場合は処理を止める
+    while (((!init && !catchUp) || (init && recordcount<initCount)) && cursor%100==0 && cursor < 10000) {
+      //検索API実行
       const params_search:QueryParamsSearch = {
         q: query,
         limit: 100,
@@ -140,7 +147,7 @@ export class ScpecificActorsSubscription {
       }
       const seachResults = await this.agent.api.app.bsky.feed.searchPosts(params_search)
 
- //     posts.push(...seachResults.data.posts)
+      //念のため検索件数をログだし
       cursor = Number(seachResults.data.cursor)
       console.log('API cursor:'+cursor)
       console.log('Cuptured:'+recordcount)
@@ -157,21 +164,21 @@ export class ScpecificActorsSubscription {
         const record = post.record as record
         let text = record.text || ''
 
-      /* 検索APIがALT TEXTの検索ができないので削除
-      if(alt === "true" && record.embed !== undefined && record.embed.images !== undefined){
-        for(let image of record.embed.images){
-          text = text + image.alt
+        // 検索APIがALT TEXTの検索ができないので削除
+        if(alt === "true" && record.embed !== undefined && record.embed.images !== undefined){
+          for(let image of record.embed.images){
+            text = text + image.alt
+          }
         }
-      }
-      */
 
         //INPUTにマッチしないものは除外
         if(!text.match(inputRegex)){
           continue
         }
+        
 
         //Invertにマッチしたものは除外
-        if(process.env.FEEDGEN_INVERT_REGEX !== undefined && text.match(inviteRegex)){
+        if(process.env.FEEDGEN_INVERT_REGEX !== undefined && process.env.FEEDGEN_INVERT_REGEX !== ''  && text.match(inviteRegex)){
           continue
         }
 
@@ -198,6 +205,26 @@ export class ScpecificActorsSubscription {
           continue
         }
 
+        //プロファイルマッチが有効化されているか
+        /*
+        if(profiles !== undefined && profiles[0]!=="") {
+          for(const profile of profiles){
+            const [textTerm, profileRegexText] = profile.split('::')
+            const profileRegex = new RegExp( profileRegexText || '','i')//除外用正規表現
+
+
+            //指定された文字が投稿本文に含まれる場合は、Regex指定された文字列がプロフィールになければ除外
+            if(text.indexOf(textTerm) !== -1 && !text.match(profileRegex)){
+              console.log(text)
+              console.log(textTerm)
+              console.log(profileRegexText)
+              continue
+            }
+          }
+        }
+        */
+
+        //投稿をDBに保存
         recordcount++
 
         const postsToCreate = {
