@@ -38,6 +38,11 @@ jobs:
     name: Publish Feed Generators
     steps:
       - uses: actions/checkout@v3
+      - name: Mask secret
+        run: |
+          echo -n '::add-mask::' > cmd.txt
+          jq < "${GITHUB_EVENT_PATH}" -r .inputs.blueskyAppPassword >> cmd.txt
+          rm cmd.txt
       - uses: actions/setup-node@v3
       - name: Publish Feed Generators
         run: |
