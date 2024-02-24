@@ -4,6 +4,9 @@ run-name: Publish Feed Generators
 on:
   workflow_dispatch:
     inputs:
+        renderServer:
+            description: "Put server name without https://"
+            required: false
         blueskyHandle:
           description: "Bluesky handle(xxxx.bsky.social)"
           required: true
@@ -27,6 +30,7 @@ env:
     FEEDGEN_FEED_DISPLAY_NAME: ${{ inputs.feedName }}
     FEEDGEN_FEED_DESCRIPTION: ${{ inputs.feedDescription }}
     FEEDGEN_FEED_ICON: ${{ inputs.feedIcon }}
+    FEEDGEN_HOSTNAME: ${{ inputs.renderServer }}
 
 jobs:
   publish_feed_generators:
