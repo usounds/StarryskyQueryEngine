@@ -17,7 +17,7 @@ on:
             description: "Feed Name"
             required: true
         feedDescription:
-            description: "Feed Description. If you need linebreak, please put \n."
+            description: "Feed Description. If you need linebreak, please put ¥n."
             required: true
         feedIcon:
             description: "Feed icon filename. Please put ./ before filename."
