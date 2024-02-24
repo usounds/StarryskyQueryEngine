@@ -5,10 +5,10 @@ on:
   workflow_dispatch:
     inputs:
         renderServer:
-            description: "Put server name without https://"
+            description: "Server name without https (ex.ss-usounds.onrender.com)"
             required: false
         blueskyHandle:
-          description: "Bluesky handle(xxxx.bsky.social)"
+          description: "Bluesky handle(ex.xxxx.bsky.social)"
           required: true
         blueskyAppPassword:
             description: "App Password"
@@ -17,14 +17,13 @@ on:
             description: "Feed Name"
             required: true
         feedDescription:
-            description: "Feed Description. If you need linebreak, please put ¥n."
+            description: "Feed Description. If you need linebreak, please put \n."
             required: true
         feedIcon:
             description: "Feed icon filename. Please put ./ before filename."
             required: false
 
 env:
-    FEEDGEN_PUBLISHER_IDENTIFIER: ${{ inputs.blueskyHandle }}
     FEEDGEN_FEED_DISPLAY_NAME: ${{ inputs.feedName }}
     FEEDGEN_FEED_DESCRIPTION: ${{ inputs.feedDescription }}
     FEEDGEN_FEED_ICON: ${{ inputs.feedIcon }}
@@ -40,6 +39,9 @@ jobs:
           FEEDGEN_APP_PASSWORD=$(jq -r '.inputs.blueskyAppPassword' $GITHUB_EVENT_PATH)
           echo ::add-mask::$FEEDGEN_APP_PASSWORD
           echo FEEDGEN_APP_PASSWORD=$FEEDGEN_APP_PASSWORD >> $GITHUB_ENV
+          FEEDGEN_PUBLISHER_IDENTIFIER=$(jq -r '.inputs.blueskyHandle' $GITHUB_EVENT_PATH)
+          echo ::add-mask::$FEEDGEN_PUBLISHER_IDENTIFIER
+          echo FEEDGEN_PUBLISHER_IDENTIFIER=$FEEDGEN_PUBLISHER_IDENTIFIER >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
       - name: Publish Feed Generators
