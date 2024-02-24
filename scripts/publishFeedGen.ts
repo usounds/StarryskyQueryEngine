@@ -31,7 +31,7 @@ const run = async () => {
   // (Optional) The path to an image to be used as your feed's avatar
   // Ex: ~/path/to/avatar.jpeg
   let avatar: string = process.env.FEEDGEN_FEED_ICON || ''
-  if (avatar.charAt(0) !== '.' ) avatar = './' + avatar
+  if (avatar !== '' && avatar.charAt(0) !== '.' ) avatar = './' + avatar
 
   // -------------------------------------
   // NO NEED TO TOUCH ANYTHING BELOW HERE
