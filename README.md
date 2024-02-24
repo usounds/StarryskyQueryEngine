@@ -1,9 +1,9 @@
-# Profile Search Custom Feed By ATProto Feed Generator
+# Starrysky
 
-All posts of users that come up in a profile search with the specified query, combined and sorted in chronological order.
+You can set up a custom feed server using Render.com or selfhost.
 
 ## Usage
 
 Refer to the following URL (Japanese only).
 
-https://qiita.com/Suibari_cha/items/56dcc0f938bdcdfe734a
+https://blog.usounds.work/posts/starry-sky-01/
