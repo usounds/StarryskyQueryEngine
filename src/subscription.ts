@@ -74,9 +74,26 @@ export class ScpecificActorsSubscription {
     this.agent = new BskyAgent({
       service: 'https://bsky.social'
     })
+
   }
 
   async run() {
+    let query       = process.env.FEEDGEN_QUERY || '' 
+    let inputRegex  = process.env.FEEDGEN_INPUT_REGEX || '' 
+    let invertRegex = process.env.FEEDGEN_INVERT_REGEX || '' 
+    let obj = {
+      key:   'starrysky',
+      query: query,
+      inputRegex: inputRegex,
+      invertRegex: invertRegex,
+      refresh:0
+    }
+    await this.db
+      .insertInto('conditions')
+      .values(obj)
+      .onConflict(oc => oc.doNothing())
+      .execute()
+
     await this.reload()
   }
 
@@ -91,15 +108,53 @@ export class ScpecificActorsSubscription {
       })
     }
 
-    const query  = process.env.FEEDGEN_QUERY || ''            //Bluesky検索API向けクエリ
+    //検索条件取得
+    let conditionBuiler = this.db
+      .selectFrom('conditions')
+      .selectAll()
+      .where('key', '=', 'starrysky')
+    const confitionRes = await conditionBuiler.execute()
+
+    let query = ''
+    let inputRegexText = ''
+    let invertRegexText = ''
+
+    for(let obj of confitionRes){
+      query = obj.query
+      inputRegexText = obj.inputRegex
+      invertRegexText = obj.invertRegex || ''
+
+      if(obj.refresh===1){
+        console.log('Refresh mode:')
+        let builder = this.db
+          .deleteFrom('post')
+          .execute()
+
+          
+        let obj = {
+            refresh: 0,
+        }
+        this.db
+            .updateTable('conditions')
+            .set(obj)
+            .where('key', '=', 'starrysky')
+            .execute()
+      }
+    }
+ 
+    console.log('query:'+query)
+    console.log('inputRegex :'+inputRegexText)
+    console.log('invertRegex:'+invertRegexText)
+
+//    const query  = process.env.FEEDGEN_QUERY || ''            //Bluesky検索API向けクエリ
     const label  = process.env.FEEDGEN_LABEL_DISABLE || ''    //センシティブラベル付き投稿表示制御用フラグ
     const reply  = process.env.FEEDGEN_REPLY_DISABLE || ''    //リプライ表示抑制用フラグ
     const alt    = process.env.FEEDGEN_INCLUDE_ALTTEXT || ''  //画像のALT文字列検索可否フラグ
     const image  = process.env.FEEDGEN_IMAGE_ONLY || ''       //画像のみ抽出フラグ
     const lang   = process.env.FEEDGEN_LANG?.split(',')       //言語フィルタ用配列
     //const profiles = process.env.FEEDGEN_PROFILE_REGEX?.split(',')        //言語フィルタ用配列
-    const inputRegex  = new RegExp( process.env.FEEDGEN_INPUT_REGEX || '','i')  //抽出正規表現
-    const inviteRegex = new RegExp( process.env.FEEDGEN_INVERT_REGEX || '','i') //除外用正規表現
+    const inputRegex  = new RegExp( inputRegexText,'i')  //抽出正規表現
+    const inviteRegex = new RegExp( invertRegexText,'i') //除外用正規表現
     const initCount = Number(process.env.FEEDGEN_INIT_POSTS || 1000)  //初期起動時の読み込み件数
 
     if(query==='')       console.log('FEEDGEN_QUERY is null.')
@@ -134,11 +189,12 @@ export class ScpecificActorsSubscription {
     let recordcount = 0;
     let posts:PostView[] = []
     let cursor = 0
+    let apiCall = 0
 
     //初回起動モードは既定の件数まで処理を継続
     //差分起動モードは前回の実行に追いつくまで処理を継続
-    //ただし、API検索が150回に到達する、または、APIの検索が終了した場合は処理を止める
-    while (((!init && !catchUp) || (init && recordcount<initCount)) && cursor%100==0 && cursor < 15000) {
+    //ただし、API検索が100回に到達する、または、APIの検索が終了した場合は処理を止める
+    while (((!init && !catchUp) || (init && recordcount<initCount)) && cursor%100==0 && apiCall < 100) {
       //検索API実行
       const params_search:QueryParamsSearch = {
         q: query,
@@ -146,11 +202,12 @@ export class ScpecificActorsSubscription {
         cursor: String(cursor)
       }
       const seachResults = await this.agent.api.app.bsky.feed.searchPosts(params_search)
+      apiCall++
 
       //念のため検索件数をログだし
       cursor = Number(seachResults.data.cursor)
-      console.log('API cursor:'+cursor)
-      console.log('Cuptured:'+recordcount)
+      console.log('API cursor:'+cursor+'('+apiCall+')')
+      console.log('recordcount:'+recordcount)
 
       for(let post of seachResults.data.posts){
         

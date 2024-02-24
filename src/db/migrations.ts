@@ -23,9 +23,18 @@ migrations['001'] = {
       .addColumn('service', 'varchar', (col) => col.primaryKey())
       .addColumn('cursor', 'integer', (col) => col.notNull())
       .execute()
+    await db.schema
+      .createTable('conditions')
+      .addColumn('key', 'varchar', (col) => col.primaryKey())
+      .addColumn('query', 'varchar', (col) => col.notNull())
+      .addColumn('inputRegex', 'varchar', (col) => col.notNull())
+      .addColumn('invertRegex', 'varchar')
+      .addColumn('refresh', 'integer')
+      .execute()
   },
   async down(db: Kysely<unknown>) {
     await db.schema.dropTable('post').execute()
     await db.schema.dropTable('sub_state').execute()
+    await db.schema.dropTable('conditions').execute()
   },
 }

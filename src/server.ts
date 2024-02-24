@@ -9,6 +9,7 @@ import { createDb, Database, migrateToLatest } from './db'
 import { ScpecificActorsSubscription } from './subscription'
 import { AppContext, Config } from './config'
 import wellKnown from './well-known'
+import databaseUtil from './databaseUtil'
 
 export class FeedGenerator {
   public app: express.Application
@@ -54,10 +55,15 @@ export class FeedGenerator {
       didResolver,
       cfg,
     }
+
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
+
     feedGeneration(server, ctx)
     describeGenerator(server, ctx)
     app.use(server.xrpc.router)
     app.use(wellKnown(ctx))
+    app.use(databaseUtil(ctx))
 
     return new FeedGenerator(app, db, actorsfeed, cfg)
   }
