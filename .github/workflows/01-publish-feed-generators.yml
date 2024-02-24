@@ -17,16 +17,14 @@ on:
             description: "Feed Name"
             required: true
         feedDescription:
-            description: "Feed Description. If you need linebreak, please put \\n."
+            description: "Feed Description. If you need linebreak, please put ¥n."
             required: true
         feedIcon:
             description: "Feed icon filename. Please put ./ before filename."
             required: false
 
-
 env:
     FEEDGEN_PUBLISHER_IDENTIFIER: ${{ inputs.blueskyHandle }}
-    FEEDGEN_APP_PASSWORD: ${{ inputs.blueskyAppPassword }}
     FEEDGEN_FEED_DISPLAY_NAME: ${{ inputs.feedName }}
     FEEDGEN_FEED_DESCRIPTION: ${{ inputs.feedDescription }}
     FEEDGEN_FEED_ICON: ${{ inputs.feedIcon }}
@@ -39,9 +37,9 @@ jobs:
     steps:
       - name: Mask Password
         run: |
-          API_PASSWORD=$(jq -r '.inputs.blueskyAppPassword' $GITHUB_EVENT_PATH)
-          echo ::add-mask::$API_PASSWORD
-          echo API_PASSWORD=$API_PASSWORD >> $GITHUB_ENV
+          FEEDGEN_APP_PASSWORD=$(jq -r '.inputs.blueskyAppPassword' $GITHUB_EVENT_PATH)
+          echo ::add-mask::$FEEDGEN_APP_PASSWORD
+          echo API_PASSWORD=$FEEDGEN_APP_PASSWORD >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
       - name: Publish Feed Generators
