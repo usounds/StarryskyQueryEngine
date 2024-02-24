@@ -37,11 +37,12 @@ jobs:
     runs-on: ubuntu-latest
     name: Publish Feed Generators
     steps:
-      - uses: actions/checkout@v3
-      - name: Mask secret
+      - name: Mask Password
         run: |
-          name=$(jq -r '.inputs.blueskyAppPassword' $GITHUB_EVENT_PATH)
-          echo "::add-mask::$blueskyAppPassword"
+          API_PASSWORD=$(jq -r '.inputs.blueskyAppPassword' $GITHUB_EVENT_PATH)
+          echo ::add-mask::$API_PASSWORD
+          echo API_PASSWORD=$API_PASSWORD >> $GITHUB_ENV
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
       - name: Publish Feed Generators
         run: |
