@@ -39,7 +39,7 @@ jobs:
         run: |
           FEEDGEN_APP_PASSWORD=$(jq -r '.inputs.blueskyAppPassword' $GITHUB_EVENT_PATH)
           echo ::add-mask::$FEEDGEN_APP_PASSWORD
-          echo API_PASSWORD=$FEEDGEN_APP_PASSWORD >> $GITHUB_ENV
+          echo FEEDGEN_APP_PASSWORD=$FEEDGEN_APP_PASSWORD >> $GITHUB_ENV
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
       - name: Publish Feed Generators
