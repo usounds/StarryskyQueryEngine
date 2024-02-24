@@ -1,0 +1,41 @@
+name: 1. Publish Feed Generators
+run-name: Publish Feed Generators
+
+on:
+  workflow_dispatch:
+    inputs:
+        blueskyHandle:
+          description: "Bluesky handle(xxxx.bsky.social)"
+          required: true
+        blueskyAppPassword:
+            description: "App Password"
+            required: true
+        feedName:
+            description: "Feed Name"
+            required: true
+        feedDescription:
+            description: "Feed Description. If you need linebreak, please put \\n."
+            required: true
+        feedIcon:
+            description: "Feed icon filename. Please put ./ before filename."
+            required: false
+
+
+env:
+    FEEDGEN_PUBLISHER_IDENTIFIER: ${{ inputs.blueskyHandle }}
+    FEEDGEN_APP_PASSWORD: ${{ inputs.blueskyAppPassword }}
+    FEEDGEN_FEED_DISPLAY_NAME: ${{ inputs.feedName }}
+    FEEDGEN_FEED_DESCRIPTION: ${{ inputs.feedDescription }}
+    FEEDGEN_FEED_ICON: ${{ inputs.feedIcon }}
+
+jobs:
+  publish_feed_generators:
+    runs-on: ubuntu-latest
+    name: Publish Feed Generators
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - name: Publish Feed Generators
+        run: |
+          npm install
+          yarn publishFeed
