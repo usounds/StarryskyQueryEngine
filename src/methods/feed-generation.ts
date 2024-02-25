@@ -4,12 +4,14 @@ import { AppContext } from '../config'
 import algos from '../algos'
 import { validateAuth } from '../auth'
 import { AtUri } from '@atproto/syntax'
+import handler from '../algos/starrysky'
 
 export default function (server: Server, ctx: AppContext) {
   server.app.bsky.feed.getFeedSkeleton(async ({ params, req }) => {
     const feedUri = new AtUri(params.feed)
     const algo = algos[feedUri.rkey]
     console.debug(params)
+    /*
     if (
       feedUri.hostname !== ctx.cfg.publisherDid ||
       feedUri.collection !== 'app.bsky.feed.generator' ||
@@ -20,6 +22,7 @@ export default function (server: Server, ctx: AppContext) {
         'UnsupportedAlgorithm',
       )
     }
+    */
     /**
      * Example of how to check auth if giving user-specific results:
      *
@@ -30,7 +33,7 @@ export default function (server: Server, ctx: AppContext) {
      * )
      */
 
-    const body = await algo(ctx, params)
+    const body = await handler(ctx, params)
     return {
       encoding: 'application/json',
       body: body,

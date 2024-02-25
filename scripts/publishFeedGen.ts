@@ -17,7 +17,7 @@ const run = async () => {
   // A short name for the record that will show in urls
   // Lowercase with no spaces.
   // Ex: whats-hot
-  const recordName = 'starrysky'
+  const recordName = process.env.FEEDGEN_RECORD_NAME || ''
 
   // A display name for your feed
   // Ex: What's Hot

@@ -41,3 +41,4 @@ export const handler = async (ctx: AppContext, params: QueryParams) => {
     feed,
   }
 }
+export default handler

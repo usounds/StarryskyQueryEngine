@@ -79,10 +79,13 @@ export class ScpecificActorsSubscription {
       inputRegexText = obj.inputRegex
       invertRegexText = obj.invertRegex || ''
 
+      console.log(obj)
+
       if(obj.refresh===1){
         console.log('Refresh mode:')
-        let builder = this.db
+        this.db
           .deleteFrom('post')
+          .where('key', '=', 'starrysky01')
           .execute()
 
           
