@@ -1,15 +1,19 @@
 import { Server } from '../lexicon'
 import { AppContext } from '../config'
-import algos from '../algos'
 import { AtUri } from '@atproto/syntax'
 
 export default function (server: Server, ctx: AppContext) {
   server.app.bsky.feed.describeFeedGenerator(async () => {
-    const feeds = Object.keys(algos).map((shortname) => ({
+    let builder = ctx.db
+      .selectFrom('conditions')
+      .selectAll()
+    const res = await builder.execute()
+    
+    const feeds =res.map((obj) => ({
       uri: AtUri.make(
         ctx.cfg.publisherDid,
         'app.bsky.feed.generator',
-        shortname,
+        obj.recordName,
       ).toString(),
     }))
     return {

@@ -5,10 +5,22 @@ import { AppContext } from '../config'
 // max 15 chars
 export const shortname = 'starrysky'
 
-export const handler = async (ctx: AppContext, params: QueryParams) => {
+export const handler = async (ctx: AppContext, params: QueryParams, rkey: string) => {
+  let recordNameHandler = await ctx.db
+    .selectFrom('conditions')
+    .selectAll()
+    .where('recordName', '=', rkey)
+    .execute()
+
+  if( recordNameHandler.length==0){
+    throw new InvalidRequestError('Unsupported algorithm:'+rkey)
+
+  }
+  
   let builder = ctx.db
     .selectFrom('post')
     .selectAll()
+    .where('key', '=', recordNameHandler[0].key)
     .orderBy('indexedAt', 'desc')
     .orderBy('cid', 'desc')
     .limit(params.limit)

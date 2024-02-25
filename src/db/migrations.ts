@@ -28,10 +28,19 @@ migrations['001'] = {
     await db.schema
       .createTable('conditions')
       .addColumn('key', 'varchar', (col) => col.primaryKey())
+      .addColumn('recordName', 'varchar', (col) => col.notNull())
       .addColumn('query', 'varchar', (col) => col.notNull())
       .addColumn('inputRegex', 'varchar', (col) => col.notNull())
       .addColumn('invertRegex', 'varchar')
-      .addColumn('refresh', 'integer')
+      .addColumn('refresh', 'integer', (col) => col.notNull())
+      .addColumn('lang', 'varchar')
+      .addColumn('labelDisable', 'varchar')
+      .addColumn('replyDisable', 'varchar')
+      .addColumn('imageOnly', 'varchar')
+      .addColumn('includeAltText', 'varchar')
+      .addColumn('initPost', 'integer', (col) => col.notNull())
+      .addColumn('pinnedPost', 'varchar')
+      .addColumn('lastExecTime', 'varchar')
       .execute()
   },
   async down(db: Kysely<unknown>) {

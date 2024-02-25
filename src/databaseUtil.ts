@@ -11,19 +11,43 @@ const makeRouter =  (ctx: AppContext) => {
         }else{
             console.log('Operation mode:updateQuery')
 
+            //登録時に正規表現をチェック
+            try {
+                new RegExp( req.body.inputRegex,'i') 
+            } catch (err) {
+                console.log('inputRegex error for:'+req.body.key)
+                res.json({res:'inputRegex error. Please input valid regex.'})
+                return
+            }
+
+            try {
+                new RegExp( req.body.invertRegex,'i')
+            } catch (err) {
+                console.log('invertRegex error for:'+req.body.key)
+                res.json({res:'invertRegex error. Please input valid regex.'})
+                return
+            }
             ctx.db
                 .deleteFrom('conditions')
-                .where('key', '=', 'starrysky01')
+                .where('key', '=', req.body.key)
                 .execute()
 
             let obj = {
-                key:'starrysky01',
+                key:req.body.key,
+                recordName:req.body.recordName,
                 query:       req.body.query,
                 refresh:     req.body.refresh,
                 inputRegex:  req.body.inputRegex,
                 invertRegex: req.body.invertRegex,
+                lang: req.body.lang,
+                labelDisable: req.body.labelDisable,
+                replyDisable: req.body.replyDisable,
+                imageOnly: req.body.imageOnly,
+                includeAltText: req.body.includeAltText,
+                initPost: req.body.initPost,
+                pinnedPost: req.body.pinnedPost,
             }
-            
+
             ctx.db
                 .insertInto('conditions')
                 .values(obj)
@@ -42,17 +66,26 @@ const makeRouter =  (ctx: AppContext) => {
             let conditionBuiler = ctx.db
                 .selectFrom('conditions')
                 .selectAll()
-                .where('key', '=', 'starrysky01')
+                .where('key', '=', req.body.key)
             const confitionRes = await conditionBuiler.execute()
             let returnObj
             for(let obj of confitionRes){
                 returnObj = {
                     result:"OK",
                     key:obj.key,
+                    recordName:obj.recordName,
                     query:obj.query,
                     inputRegex:obj.inputRegex,
                     invertRegex:obj.invertRegex,
                     refresh:obj.refresh,
+                    lang:obj.lang,
+                    labelDisable:obj.labelDisable,
+                    replyDisable:obj.replyDisable,
+                    imageOnly:obj.imageOnly,
+                    includeAltText:obj.includeAltText,
+                    initPost:obj.initPost,
+                    pinnedPost:obj.pinnedPost,
+                    lastExecTime:obj.lastExecTime,
                 }
             }
             res.json(returnObj)
