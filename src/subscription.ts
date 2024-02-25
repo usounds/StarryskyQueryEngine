@@ -79,22 +79,30 @@ export class ScpecificActorsSubscription {
       inputRegexText = obj.inputRegex
       invertRegexText = obj.invertRegex || ''
 
-      console.log(obj)
-
-      if(obj.refresh===1){
+      if(obj.refresh!==0){
         console.log('Refresh mode:')
-        this.db
-          .deleteFrom('post')
-          .where('key', '=', 'starrysky01')
-          .execute()
+        
+        if(obj.refresh === 1){
+          this.db
+            .deleteFrom('post')
+            .where('key', '=', 'starrysky01')
+            .execute()
 
+        }else if(obj.refresh < 0){
+          let deletePostBuilder = this.db
+            .deleteFrom('post')
+            .orderBy('indexedAt', 'desc')
+            .where('key', '=', 'starrysky01')
+            .limit(obj.refresh * -1)
+            .execute()
+        }
           
-        let obj = {
+        let updateObj = {
             refresh: 0,
         }
         this.db
             .updateTable('conditions')
-            .set(obj)
+            .set(updateObj)
             .where('key', '=', 'starrysky01')
             .execute()
       }
