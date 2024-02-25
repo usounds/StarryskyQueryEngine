@@ -19,7 +19,7 @@ const makeRouter =  (ctx: AppContext) => {
             ctx.db
                 .updateTable('conditions')
                 .set(obj)
-                .where('key', '=', 'starrysky')
+                .where('key', '=', 'starrysky01')
                 .execute()
 
             res.json({res:'OK'})
@@ -35,7 +35,7 @@ const makeRouter =  (ctx: AppContext) => {
             let conditionBuiler = ctx.db
                 .selectFrom('conditions')
                 .selectAll()
-                .where('key', '=', 'starrysky')
+                .where('key', '=', 'starrysky01')
             const confitionRes = await conditionBuiler.execute()
             let returnObj
             for(let obj of confitionRes){

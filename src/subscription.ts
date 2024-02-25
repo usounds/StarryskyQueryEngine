@@ -22,51 +22,6 @@ interface record {
   }
 }
 
-export class FirehoseSubscription extends FirehoseSubscriptionBase {
-  async handleEvent(evt: RepoEvent) {
-    if (!isCommit(evt)) return
-    const ops = await getOpsByType(evt)
-
-    // This logs the text of every post off the firehose.
-    // Just for fun :)
-    // Delete before actually using
-    for (const post of ops.posts.creates) {
-      console.log(post.record.text)
-    }
-
-    const postsToDelete = ops.posts.deletes.map((del) => del.uri)
-    const postsToCreate = ops.posts.creates
-      .filter((create) => {
-        // only alf-related posts
-        return create.record.text.toLowerCase().includes('alf')
-      })
-      .map((create) => {
-        // map alf-related posts to a db row
-        return {
-          uri: create.uri,
-          cid: create.cid,
-          replyParent: create.record?.reply?.parent.uri ?? null,
-          replyRoot: create.record?.reply?.root.uri ?? null,
-          indexedAt: new Date().toISOString(),
-        }
-      })
-
-    if (postsToDelete.length > 0) {
-      await this.db
-        .deleteFrom('post')
-        .where('uri', 'in', postsToDelete)
-        .execute()
-    }
-    if (postsToCreate.length > 0) {
-      await this.db
-        .insertInto('post')
-        .values(postsToCreate)
-        .onConflict((oc) => oc.doNothing())
-        .execute()
-    }
-  }
-}
-
 export class ScpecificActorsSubscription {
   agent:BskyAgent
 
@@ -82,7 +37,7 @@ export class ScpecificActorsSubscription {
     let inputRegex  = process.env.FEEDGEN_INPUT_REGEX || '' 
     let invertRegex = process.env.FEEDGEN_INVERT_REGEX || '' 
     let obj = {
-      key:   'starrysky',
+      key:   'starrysky01',
       query: query,
       inputRegex: inputRegex,
       invertRegex: invertRegex,
@@ -112,7 +67,7 @@ export class ScpecificActorsSubscription {
     let conditionBuiler = this.db
       .selectFrom('conditions')
       .selectAll()
-      .where('key', '=', 'starrysky')
+      .where('key', '=', 'starrysky01')
     const confitionRes = await conditionBuiler.execute()
 
     let query = ''
@@ -137,7 +92,7 @@ export class ScpecificActorsSubscription {
         this.db
             .updateTable('conditions')
             .set(obj)
-            .where('key', '=', 'starrysky')
+            .where('key', '=', 'starrysky01')
             .execute()
       }
     }
@@ -190,6 +145,7 @@ export class ScpecificActorsSubscription {
     let posts:PostView[] = []
     let cursor = 0
     let apiCall = 0
+    const startTime = Date.now(); // 開始時間
 
     //初回起動モードは既定の件数まで処理を継続
     //差分起動モードは前回の実行に追いつくまで処理を継続
@@ -206,8 +162,7 @@ export class ScpecificActorsSubscription {
 
       //念のため検索件数をログだし
       cursor = Number(seachResults.data.cursor)
-      console.log('API cursor:'+cursor+'('+apiCall+')')
-      console.log('recordcount:'+recordcount)
+      console.log('API cursor:'+cursor+'('+apiCall+'). Current post count:'+recordcount)
 
       for(let post of seachResults.data.posts){
         
@@ -286,6 +241,7 @@ export class ScpecificActorsSubscription {
 
         const postsToCreate = {
           uri: post.uri,
+          key: 'starrysky01',
           cid: post.cid,
           // indexedAt: new Date().toISOString(),
           indexedAt: record.createdAt
@@ -298,7 +254,9 @@ export class ScpecificActorsSubscription {
       }
     }
 
-    console.log('Fetch job finished. Current job captured:' + recordcount)
+    const endTime = Date.now(); // 終了時間
+    console.log('Fetch job finished. Current job captured:' + recordcount+'. Time:'+ (endTime - startTime)+'ms')
+
   }
 
   intervalId = setInterval(async () => {
