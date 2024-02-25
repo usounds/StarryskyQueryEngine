@@ -5,7 +5,7 @@ const run = async () => {
   dotenv.config()
   const handle = process.env.FEEDGEN_PUBLISHER_IDENTIFIER || ''
   const password = process.env.FEEDGEN_APP_PASSWORD || ''
-  const recordName = 'starrysky'
+  const recordName = process.env.FEEDGEN_RECORD_NAME || ''
 
   // only update this if in a test environment
   const agent = new AtpAgent({ service: 'https://bsky.social' })

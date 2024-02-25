@@ -10,6 +10,12 @@ on:
         blueskyAppPassword:
             description: "App Password"
             required: true
+        feedRecordName:
+            description: "Feed Record Name. That consists of 15 half-width alphanumeric characters. "
+            required: true
+            
+env:
+  FEEDGEN_RECORD_NAME: ${{ inputs.feedRecordName }}
 
 jobs:
   delete_feed_generators:
