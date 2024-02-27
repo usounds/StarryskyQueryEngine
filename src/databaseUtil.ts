@@ -16,7 +16,7 @@ const makeRouter =  (ctx: AppContext) => {
                 new RegExp( req.body.inputRegex,'i') 
             } catch (err) {
                 console.log('inputRegex error for:'+req.body.key)
-                res.json({res:'inputRegex error. Please input valid regex.'})
+                res.json({result:'INPUT_REGEX_ERROR',message:'inputRegex error. Please input valid regex.'})
                 return
             }
 
@@ -24,7 +24,7 @@ const makeRouter =  (ctx: AppContext) => {
                 new RegExp( req.body.invertRegex,'i')
             } catch (err) {
                 console.log('invertRegex error for:'+req.body.key)
-                res.json({res:'invertRegex error. Please input valid regex.'})
+                res.json({result:'INVERT_REGEX_ERROR',message:'invertRegex error. Please input valid regex.'})
                 return
             }
             ctx.db
@@ -53,7 +53,7 @@ const makeRouter =  (ctx: AppContext) => {
                 .values(obj)
                 .execute()
 
-            res.json({res:'OK'})
+            res.json({result:'OK'})
         }
     })
 
@@ -68,6 +68,12 @@ const makeRouter =  (ctx: AppContext) => {
                 .selectAll()
                 .where('key', '=', req.body.key)
             const confitionRes = await conditionBuiler.execute()
+
+            if(confitionRes.length===0){
+                res.json({result:'NOT_FOUND',message:'Specified key not found. :'+req.body.key})
+                return
+            }
+
             let returnObj
             for(let obj of confitionRes){
                 returnObj = {

@@ -28,8 +28,9 @@ export class ScpecificActorsSubscription {
   }
 
   async run() {
+    //
+    const recordName  = process.env.FEEDGEN_RECORD_NAME || 'starrysky01' 
     const query       = process.env.FEEDGEN_QUERY || '' 
-    const recordName       = process.env.FEEDGEN_RECORD_NAME || 'starrysky01' 
     const inputRegex  = process.env.FEEDGEN_INPUT_REGEX || '' 
     const invertRegex = process.env.FEEDGEN_INVERT_REGEX || '' 
     const label  = process.env.FEEDGEN_LABEL_DISABLE || 'false'    //センシティブラベル付き投稿表示制御用フラグ
@@ -51,7 +52,7 @@ export class ScpecificActorsSubscription {
         query: query,
         inputRegex: inputRegex,
         invertRegex: invertRegex,
-        refresh:0,
+        refresh:0,                                            
         lang: lang,
         labelDisable: label,
         replyDisable: reply,
@@ -150,10 +151,6 @@ export class ScpecificActorsSubscription {
       const pinnedPost   = process.env.FEEDGEN_PINNED_POST||''       //言語フィルタ用配列
       const initCount = obj.initPost||100  //初期起動時の読み込み件数
 
-      console.log('query:'+query)
-      console.log('inputRegex :'+inputRegexText)
-      console.log('invertRegex:'+invertRegexText)
-  
       const inputRegex  = new RegExp( inputRegexText,'i')  //抽出正規表現
       const inviteRegex = new RegExp( invertRegexText,'i') //除外用正規表現
   
