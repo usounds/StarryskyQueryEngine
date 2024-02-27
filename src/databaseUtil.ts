@@ -102,6 +102,7 @@ const makeRouter =  (ctx: AppContext) => {
                     feedDescription:obj.feedDescription,
                     privateFeed:obj.privateFeed,
                     limitCount:obj.limitCount,
+                    recordCount:obj.recordCount,
                 }
             }
             res.json(returnObj)

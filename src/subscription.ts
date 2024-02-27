@@ -60,7 +60,7 @@ export class ScpecificActorsSubscription {
         imageOnly: image,
         includeAltText:alt,
         pinnedPost: pinnedPost,
-        initPost:initPost,
+        initPost:initPost
       }
       await this.db
         .insertInto('conditions')
@@ -96,18 +96,18 @@ export class ScpecificActorsSubscription {
       if(obj.refresh!==0){
         console.log('Refresh mode:')
         
-        if(obj.refresh === 1){
+        if(obj.refresh === -1){
           this.db
             .deleteFrom('post')
             .where('key', '=', obj.key)
             .execute()
 
-        }else if(obj.refresh < 0){
+        }else if(obj.refresh > 0){
           this.db
             .deleteFrom('post')
             .orderBy('indexedAt', 'desc')
             .where('key', '=', obj.key)
-            .limit(obj.refresh * -1)
+            .limit(obj.refresh )
             .execute()
         }
           
@@ -273,6 +273,7 @@ export class ScpecificActorsSubscription {
 
       let updateObj = {
         lastExecTime: (endTime - startTime)+'ms',
+        recordCount:recordcount+res.length
       }
 
       this.db
