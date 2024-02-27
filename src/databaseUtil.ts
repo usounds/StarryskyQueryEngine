@@ -46,6 +46,11 @@ const makeRouter =  (ctx: AppContext) => {
                 includeAltText: req.body.includeAltText,
                 initPost: req.body.initPost,
                 pinnedPost: req.body.pinnedPost,
+                limitCount:req.body.limitCount,
+                privateFeed:req.body.privateFeed,
+                feedName:req.body.feedName,
+                feedDescription:req.body.feedDescription,
+                feedAvatar:req.body.feedAvatar
             }
 
             ctx.db
@@ -92,6 +97,11 @@ const makeRouter =  (ctx: AppContext) => {
                     initPost:obj.initPost,
                     pinnedPost:obj.pinnedPost,
                     lastExecTime:obj.lastExecTime,
+                    feedAvatar:obj.feedAvatar,
+                    feedName:obj.feedName,
+                    feedDescription:obj.feedDescription,
+                    privateFeed:obj.privateFeed,
+                    limitCount:obj.limitCount,
                 }
             }
             res.json(returnObj)

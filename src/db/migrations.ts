@@ -41,6 +41,11 @@ migrations['001'] = {
       .addColumn('initPost', 'integer', (col) => col.notNull())
       .addColumn('pinnedPost', 'varchar')
       .addColumn('lastExecTime', 'varchar')
+      .addColumn('feedName', 'varchar')
+      .addColumn('feedDescription', 'varchar')
+      .addColumn('limitCount', 'integer', (col) => col.notNull())
+      .addColumn('privateFeed', 'varchar')
+      .addColumn('feedAvatar', 'varchar')
       .execute()
   },
   async down(db: Kysely<unknown>) {

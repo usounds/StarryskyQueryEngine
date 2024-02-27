@@ -34,4 +34,9 @@ export type Conditions = {
   initPost: number
   pinnedPost: string | null
   lastExecTime: string | null
+  feedName: string | null
+  feedDescription: string | null
+  limitCount: number
+  privateFeed: string | null
+  feedAvatar: string | null
 }
