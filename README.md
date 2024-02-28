@@ -8,4 +8,6 @@ https://github.com/usounds/StarryskyAdminConsole
 
 Refer to the following URL (Japanese only).
 
+現在、セットアップ手順の見直しを行っております。セットアップが出来るようになったら、改めてご連絡します
+
 https://blog.usounds.work/posts/starry-sky-01/
