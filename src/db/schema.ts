@@ -39,5 +39,5 @@ export type Conditions = {
   limitCount: number
   privateFeed: string | null
   feedAvatar: string | null
-  recordCount: number | null
+  recordCount: number
 }

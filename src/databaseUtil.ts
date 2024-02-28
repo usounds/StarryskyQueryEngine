@@ -50,7 +50,8 @@ const makeRouter =  (ctx: AppContext) => {
                 privateFeed:req.body.privateFeed,
                 feedName:req.body.feedName,
                 feedDescription:req.body.feedDescription,
-                feedAvatar:req.body.feedAvatar
+                feedAvatar:req.body.feedAvatar,
+                recordCount:0,
             }
 
             ctx.db

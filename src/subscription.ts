@@ -60,7 +60,8 @@ export class ScpecificActorsSubscription {
         imageOnly: image,
         includeAltText:alt,
         pinnedPost: pinnedPost,
-        initPost:initPost
+        initPost:initPost,
+        recordCount: 0
       }
       await this.db
         .insertInto('conditions')
