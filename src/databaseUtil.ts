@@ -16,7 +16,7 @@ const makeRouter =  (ctx: AppContext) => {
                 new RegExp( req.body.inputRegex,'i') 
             } catch (err) {
                 console.log('inputRegex error for:'+req.body.key)
-                res.json({result:'INPUT_REGEX_ERROR',message:'inputRegex error. Please input valid regex.'})
+                res.json({result:'INPUT_REGEX_ERROR',message:'inputRegexの正規表現が正しくありません。inputRegex error. Please input valid regex.'})
                 return
             }
 
@@ -24,7 +24,7 @@ const makeRouter =  (ctx: AppContext) => {
                 new RegExp( req.body.invertRegex,'i')
             } catch (err) {
                 console.log('invertRegex error for:'+req.body.key)
-                res.json({result:'INVERT_REGEX_ERROR',message:'invertRegex error. Please input valid regex.'})
+                res.json({result:'INVERT_REGEX_ERROR',message:'invertRegexの正規表現が正しくありません。invertRegex error. Please input valid regex.'})
                 return
             }
             ctx.db
@@ -59,6 +59,7 @@ const makeRouter =  (ctx: AppContext) => {
                 .values(obj)
                 .execute()
 
+            console.log('Operation mode:updateQuery succeeded.')
             res.json({result:'OK'})
         }
     })
@@ -75,8 +76,17 @@ const makeRouter =  (ctx: AppContext) => {
                 .where('key', '=', req.body.key)
             const confitionRes = await conditionBuiler.execute()
 
+            let isMemoryMode = false
+            if(!process.env.FEEDGEN_SQLITE_LOCATION || process.env.FEEDGEN_SQLITE_LOCATION ===':memory:'){
+                isMemoryMode = true
+            }
+
             if(confitionRes.length===0){
-                res.json({result:'NOT_FOUND',message:'Specified key not found. :'+req.body.key})
+                res.json({
+                    result:'NOT_FOUND',
+                    message:'Specified key not found. '+req.body.key,
+                    isMemoryMode:isMemoryMode
+                })
                 return
             }
 
@@ -104,6 +114,7 @@ const makeRouter =  (ctx: AppContext) => {
                     privateFeed:obj.privateFeed,
                     limitCount:obj.limitCount,
                     recordCount:obj.recordCount,
+                    isMemoryMode:isMemoryMode
                 }
             }
             res.json(returnObj)

@@ -90,7 +90,7 @@ export class ScpecificActorsSubscription {
       .selectAll()
     const confitionRes = await conditionBuiler.execute()
 
-    if(confitionRes.length===0) console.log('There is no conditions.')
+    if(confitionRes.length===0) console.log('現在、Query Engineには検索条件は登録されていません。Admin Consoleから登録してください。There is no conditions.')
 
     for(let obj of confitionRes){
 
@@ -154,13 +154,19 @@ export class ScpecificActorsSubscription {
       const initCount = obj.initPost||100  //初期起動時の読み込み件数
 
       const inputRegex  = new RegExp( inputRegexText,'i')  //抽出正規表現
-      const inviteRegex = new RegExp( invertRegexText,'i') //除外用正規表現
+      const invertRegex = new RegExp( invertRegexText,'i') //除外用正規表現
   
       let recordcount = 0;
       let posts:PostView[] = []
       let cursor = 0
       let apiCall = 0
       const startTime = Date.now(); // 開始時間
+
+      if(process.env.DEBUG_MODE){
+        console.log('query:'+query)
+        console.log('inputRegexText:'+inputRegexText)
+        console.log('invertRegexText:'+invertRegexText)
+      }
   
       //初回起動モードは既定の件数まで処理を継続
       //差分起動モードは前回の実行に追いつくまで処理を継続
@@ -205,7 +211,7 @@ export class ScpecificActorsSubscription {
           
   
           //Invertにマッチしたものは除外
-          if(process.env.FEEDGEN_INVERT_REGEX !== undefined && process.env.FEEDGEN_INVERT_REGEX !== ''  && text.match(inviteRegex)){
+          if(invertRegexText !== ''  && text.match(invertRegex)){
             continue
           }
   
