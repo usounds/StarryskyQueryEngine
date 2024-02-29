@@ -6,10 +6,12 @@ const makeRouter =  (ctx: AppContext) => {
 
     //データ更新
     router.post('/setQuery', async (req: express.Request, res) => {
-        if(process.env.EDIT_WEB_PASSKEY !== undefined && req.body.authkey !== process.env.EDIT_WEB_PASSKEY){
+        console.log('Operation mode:updateQuery')
+        const requestWebPasskey = req.headers['x-starrtsky-webpasskey']
+
+        if(process.env.EDIT_WEB_PASSKEY !== undefined && requestWebPasskey !== process.env.EDIT_WEB_PASSKEY){
             res.sendStatus(401)
         }else{
-            console.log('Operation mode:updateQuery')
 
             //登録時に正規表現をチェック
             try {
@@ -66,10 +68,11 @@ const makeRouter =  (ctx: AppContext) => {
 
     //データ取得
     router.post('/getQuery', async (req: express.Request, res) => {
-        if(process.env.EDIT_WEB_PASSKEY !== undefined && req.body.authkey !== process.env.EDIT_WEB_PASSKEY){
+        console.log('Operation mode:getQuery')
+        const requestWebPasskey = req.headers['x-starrtsky-webpasskey']
+        if(process.env.EDIT_WEB_PASSKEY !== undefined && requestWebPasskey !== process.env.EDIT_WEB_PASSKEY){
             res.sendStatus(401)
         }else{
-            console.log('Operation mode:getQuery')
             let conditionBuiler = ctx.db
                 .selectFrom('conditions')
                 .selectAll()
