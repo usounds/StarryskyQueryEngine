@@ -29,6 +29,45 @@ const makeRouter =  (ctx: AppContext) => {
                 res.status(500).json({result:'INVERT_REGEX_ERROR',message:'invertRegexの正規表現が正しくありません。invertRegex error. Please input valid regex.'})
                 return
             }
+
+
+            const recordNameRegex = new RegExp(/^[a-zA-Z0-9]{1,15}$/)
+            
+            if(!req.body.recordName.match(recordNameRegex)){
+                console.log('recordNameRegex error for:'+req.body.recordNameRegex)
+                res.status(500).json({result:'RECORDNAME_NOTALPHA',message:'RecordNameは半角英数の15文字以内です'})
+                return
+
+            }
+
+            if(isNaN(Number(req.body.refresh))){
+                console.log('refresh error for:'+req.body.refresh)
+                res.status(500).json({result:'NOT_NUMBER_REFRESH',message:'Refreshは数字のみです。'})
+                return
+
+            }
+
+            if(isNaN(Number(req.body.refresh))){
+                console.log('refresh error for:'+req.body.refresh)
+                res.status(500).json({result:'NOT_NUMBER_REFRESH',message:'Refreshは数字のみです。'})
+                return
+
+            }
+
+            if(isNaN(Number(req.body.initPost))){
+                console.log('initPost error for:'+req.body.initPost)
+                res.status(500).json({result:'NOT_NUMBER_INITPOST',message:'初期取り込み件数は数字のみです。'})
+                return
+
+            }
+
+            if(isNaN(Number(req.body.limitCount))){
+                console.log('limitCount error for:'+req.body.limitCount)
+                res.status(500).json({result:'NOT_NUMBER_LIMITCOUNT',message:'上限件数は数字のみです。'})
+                return
+
+            }
+
             ctx.db
                 .deleteFrom('conditions')
                 .where('key', '=', req.body.key)

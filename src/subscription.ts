@@ -38,8 +38,10 @@ export class ScpecificActorsSubscription {
       serverUrl = 'https://' + process.env.FEEDGEN_HOSTNAME
     }
 
-    console.log('Query Engine URL are '+serverUrl)
-    console.log('Admin Console URL are '+adminConsoleEndpoint)
+    console.log('Query Engine URL is '+serverUrl)
+    console.log('Admin Console URL is '+adminConsoleEndpoint)
+    var os = require('os')
+    console.log('OS hostname is '+os.hostname())
 
     const result = await fetch(adminConsoleEndpoint+"/api/getD1Query",
         {
