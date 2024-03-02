@@ -3,6 +3,7 @@ import { BskyAgent } from '@atproto/api'
 import { QueryParams as QueryParamsSearch } from './lexicon/types/app/bsky/feed/searchPosts'
 import { Database } from './db'
 import {PostView } from './lexicon/types/app/bsky/feed/defs'
+import fetch from 'node-fetch'
 
 interface record {
   createdAt: string,
@@ -28,46 +29,62 @@ export class ScpecificActorsSubscription {
   }
 
   async run() {
-    //
-    const recordName  = process.env.FEEDGEN_RECORD_NAME || 'starrysky01' 
-    const query       = process.env.FEEDGEN_QUERY || '' 
-    const inputRegex  = process.env.FEEDGEN_INPUT_REGEX || '' 
-    const invertRegex = process.env.FEEDGEN_INVERT_REGEX || '' 
-    const label  = process.env.FEEDGEN_LABEL_DISABLE || 'false'    //センシティブラベル付き投稿表示制御用フラグ
-    const reply  = process.env.FEEDGEN_REPLY_DISABLE || 'false'    //リプライ表示抑制用フラグ
-    const alt    = process.env.FEEDGEN_INCLUDE_ALTTEXT || 'false'  //画像のALT文字列検索可否フラグ
-    const image  = process.env.FEEDGEN_IMAGE_ONLY || 'false'       //画像のみ抽出フラグ
-    const lang   = process.env.FEEDGEN_LANG||''                     //言語フィルタ用配列
-    const pinnedPost   = process.env.FEEDGEN_PINNED_POST||''       //言語フィルタ用配列
-    const initPost   = Number(process.env.FEEDGEN_INIT_POSTS)||100       //言語フィルタ用配列
+    //Admin Console経由でD1に保存された検索条件を取得
+    const adminConsoleEndpoint = process.env.STARRYSKY_ADMIN_CONSOLE || 'https://starrysky-console.pages.dev'
+    let serverUrl
+    if(process.env.FEEDGEN_HOSTNAME==='example.com'){
+      serverUrl = 'http://localhost:' + process.env.FEEDGEN_PORT
+    }else{
+      serverUrl = 'https://' + process.env.FEEDGEN_HOSTNAME + ':' + process.env.FEEDGEN_PORT
+    }
 
-    //登録時に正規表現をチェック
-    new RegExp( inputRegex,'i') 
-    new RegExp( invertRegex,'i') 
+    console.log('Admin Console URL are '+serverUrl)
 
-    if(query!==''){
-      let obj = {
-        key:   'starrysky01',
-        recordName:   recordName,
-        query: query,
-        inputRegex: inputRegex,
-        invertRegex: invertRegex,
-        refresh:0,
-        limitCount:1000,
-        lang: lang,
-        labelDisable: label,
-        replyDisable: reply,
-        imageOnly: image,
-        includeAltText:alt,
-        pinnedPost: pinnedPost,
-        initPost:initPost,
-        recordCount: 0
+    const result = await fetch(adminConsoleEndpoint+"/api/getD1Query",
+        {
+            method: 'post',headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({serverUrl:serverUrl})
+        }
+    );
+
+    const resultObject = await result.json()
+    console.log(resultObject)
+
+    if(resultObject.result==='OK'){
+      for(let record of resultObject.resultRecord){
+        let obj = {
+          key:          record.key ||'',
+          recordName:   record.recordName ||'',
+          query:        record.query ||'',
+          inputRegex:   record.inputRegex ||'',
+          invertRegex:  record.invertRegex,
+          refresh:      record.refresh||0,
+          lang:         record.lang,
+          labelDisable: record.labelDisable,
+          replyDisable: record.replyDisable,
+          imageOnly:    record.imageOnly,
+          initPost:     record.initPost||100,
+          pinnedPost:   record.pinnedPost,
+          limitCount:   record.limitCount||2000,
+          feedAvatar:   record.feedAvatar,
+          feedName:     record.feedName,
+          feedDescription:record.feedDescription,
+          includeAltText:record.includeAltText,
+          recordCount: 0
+        }
+
+        await this.db
+          .insertInto('conditions')
+          .values(obj)
+          .onConflict(oc => oc.doNothing())
+          .execute()
+
+        console.log('Admin Consoleから検索条件を復元しました：'+record.key)
+          
+
       }
-      await this.db
-        .insertInto('conditions')
-        .values(obj)
-        .onConflict(oc => oc.doNothing())
-        .execute()
     }
 
     await this.reload()
@@ -137,10 +154,10 @@ export class ScpecificActorsSubscription {
         //件数ゼロなら初回起動モード
         if(res.length===0){
           init = true
-          console.log('#####['+obj.key+'] Initial job run #####')
+          console.log('#####['+obj.key+'] Initial job run.')
         //1件でも入っていれば差分起動モード
         }else{
-          console.log('Delta job run-->['+obj.key+']. Current post count:'+res.length)
+          console.log('#####['+obj.key+']. Delta job run. Current post count:'+res.length)
         }
 
         const query = obj.query
