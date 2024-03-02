@@ -35,10 +35,11 @@ export class ScpecificActorsSubscription {
     if(process.env.FEEDGEN_HOSTNAME==='example.com'){
       serverUrl = 'http://localhost:' + process.env.FEEDGEN_PORT
     }else{
-      serverUrl = 'https://' + process.env.FEEDGEN_HOSTNAME + ':' + process.env.FEEDGEN_PORT
+      serverUrl = 'https://' + process.env.FEEDGEN_HOSTNAME
     }
 
-    console.log('Admin Console URL are '+serverUrl)
+    console.log('Query Engine URL are '+serverUrl)
+    console.log('Admin Console URL are '+adminConsoleEndpoint)
 
     const result = await fetch(adminConsoleEndpoint+"/api/getD1Query",
         {
