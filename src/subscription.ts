@@ -5,17 +5,24 @@ import { Database } from './db'
 import {PostView } from './lexicon/types/app/bsky/feed/defs'
 import fetch from 'node-fetch'
 
-interface record {
-  createdAt: string,
-  text?:string,
-  langs?:String[],
-  reply:{},
-  embed?:{
-    images?:[{ 
-        alt?:String
-      }
-    ]
+type record = {
+  createdAt: string
+  text?: string
+  langs?: string[]
+  reply: {}
+  embed?: {
+    images?: imageObject[]
   }
+}
+
+type imageObject = {
+  alt: string
+  aspectRatio: {
+    height: number
+    width: number
+  }
+  fullsize: string
+  thumb: string
 }
 
 export class ScpecificActorsSubscription {
@@ -38,56 +45,58 @@ export class ScpecificActorsSubscription {
       serverUrl = 'https://' + process.env.FEEDGEN_HOSTNAME
     }
 
+    console.log('Starrysky Query Engine:v0.1.0')
     console.log('Query Engine URL is '+serverUrl)
     console.log('Admin Console URL is '+adminConsoleEndpoint)
-    var os = require('os')
-    console.log('OS hostname is '+os.hostname())
+    
+    try{
+      const result = await fetch(adminConsoleEndpoint+"/api/getD1Query",
+          {
+              method: 'post',headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({serverUrl:serverUrl})
+          }
+      );
 
-    const result = await fetch(adminConsoleEndpoint+"/api/getD1Query",
-        {
-            method: 'post',headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({serverUrl:serverUrl})
+      const resultObject = await result.json()
+
+      if(resultObject.result==='OK'){
+        for(let record of resultObject.resultRecord){
+          let obj = {
+            key:          record.key ||'',
+            recordName:   record.recordName ||'',
+            query:        record.query ||'',
+            inputRegex:   record.inputRegex ||'',
+            invertRegex:  record.invertRegex,
+            refresh:      record.refresh||0,
+            lang:         record.lang,
+            labelDisable: record.labelDisable,
+            replyDisable: record.replyDisable,
+            imageOnly:    record.imageOnly,
+            initPost:     record.initPost||100,
+            pinnedPost:   record.pinnedPost,
+            limitCount:   record.limitCount||2000,
+            feedAvatar:   record.feedAvatar,
+            feedName:     record.feedName,
+            feedDescription:record.feedDescription,
+            includeAltText:record.includeAltText,
+            recordCount: 0
+          }
+
+          await this.db
+            .insertInto('conditions')
+            .values(obj)
+            .onConflict(oc => oc.doNothing())
+            .execute()
+
+          console.log('Admin Consoleから検索条件を復元しました：'+record.key)
+            
+
         }
-    );
-
-    const resultObject = await result.json()
-    console.log(resultObject)
-
-    if(resultObject.result==='OK'){
-      for(let record of resultObject.resultRecord){
-        let obj = {
-          key:          record.key ||'',
-          recordName:   record.recordName ||'',
-          query:        record.query ||'',
-          inputRegex:   record.inputRegex ||'',
-          invertRegex:  record.invertRegex,
-          refresh:      record.refresh||0,
-          lang:         record.lang,
-          labelDisable: record.labelDisable,
-          replyDisable: record.replyDisable,
-          imageOnly:    record.imageOnly,
-          initPost:     record.initPost||100,
-          pinnedPost:   record.pinnedPost,
-          limitCount:   record.limitCount||2000,
-          feedAvatar:   record.feedAvatar,
-          feedName:     record.feedName,
-          feedDescription:record.feedDescription,
-          includeAltText:record.includeAltText,
-          recordCount: 0
-        }
-
-        await this.db
-          .insertInto('conditions')
-          .values(obj)
-          .onConflict(oc => oc.doNothing())
-          .execute()
-
-        console.log('Admin Consoleから検索条件を復元しました：'+record.key)
-          
-
       }
+    }catch(e){
+      console.error('Admin Consoleへ接続できず、検索条件は復元できませんでした。'+e)
     }
 
     await this.reload()
@@ -110,7 +119,7 @@ export class ScpecificActorsSubscription {
       .selectAll()
     const confitionRes = await conditionBuiler.execute()
 
-    if(confitionRes.length===0) console.log('現在、Query Engineには検索条件は登録されていません。Admin Consoleから登録してください。There is no conditions.')
+    if(confitionRes.length===0) console.log('Query Engineには検索条件は登録されていません。Admin Consoleから登録してください。There is no conditions.')
 
     for(let obj of confitionRes){
 
@@ -221,7 +230,7 @@ export class ScpecificActorsSubscription {
             // 検索APIがALT TEXTの検索ができないので削除
             if(alt === "true" && record.embed !== undefined && record.embed.images !== undefined){
               for(let image of record.embed.images){
-                text = text + image.alt
+                text = text + '\n' + image.alt
               }
             }
     
@@ -237,7 +246,10 @@ export class ScpecificActorsSubscription {
             }
     
             //画像フィルタ
-            if(image === 'true' && record.embed?.images === undefined ){
+            const imageObject  = post.embed?.images as imageObject[]
+            if (image === 'imageOnly' && imageObject === undefined) {
+              continue
+            }else if(image === 'textOnly' && imageObject !== undefined && imageObject.length>0) {
               continue
             }
     

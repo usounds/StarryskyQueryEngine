@@ -35,35 +35,28 @@ const makeRouter =  (ctx: AppContext) => {
             
             if(!req.body.recordName.match(recordNameRegex)){
                 console.log('recordNameRegex error for:'+req.body.recordNameRegex)
-                res.status(500).json({result:'RECORDNAME_NOTALPHA',message:'RecordNameは半角英数の15文字以内です'})
+                res.status(500).json({result:'RECORDNAME_NOTALPHA',message:'RecordNameは半角英数の15文字以内です/RecordName shoud be 15 digit alphabets.'})
                 return
 
             }
 
             if(isNaN(Number(req.body.refresh))){
                 console.log('refresh error for:'+req.body.refresh)
-                res.status(500).json({result:'NOT_NUMBER_REFRESH',message:'Refreshは数字のみです。'})
-                return
-
-            }
-
-            if(isNaN(Number(req.body.refresh))){
-                console.log('refresh error for:'+req.body.refresh)
-                res.status(500).json({result:'NOT_NUMBER_REFRESH',message:'Refreshは数字のみです。'})
+                res.status(500).json({result:'NOT_NUMBER_REFRESH',message:'Refreshは数字のみです。/Refresh should be number.'})
                 return
 
             }
 
             if(isNaN(Number(req.body.initPost))){
                 console.log('initPost error for:'+req.body.initPost)
-                res.status(500).json({result:'NOT_NUMBER_INITPOST',message:'初期取り込み件数は数字のみです。'})
+                res.status(500).json({result:'NOT_NUMBER_INITPOST',message:'初期取り込み件数は数字のみです。/Initial post count should be number.'})
                 return
 
             }
 
             if(isNaN(Number(req.body.limitCount))){
                 console.log('limitCount error for:'+req.body.limitCount)
-                res.status(500).json({result:'NOT_NUMBER_LIMITCOUNT',message:'上限件数は数字のみです。'})
+                res.status(500).json({result:'NOT_NUMBER_LIMITCOUNT',message:'上限件数は数字のみです。/Limit post count should be number.'})
                 return
 
             }
