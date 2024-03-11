@@ -45,7 +45,7 @@ export class ScpecificActorsSubscription {
       serverUrl = 'https://' + process.env.FEEDGEN_HOSTNAME
     }
 
-    console.log('Starrysky Query Engine:v0.1.0')
+    console.log('Starrysky Query Engine:v0.1.1-1')
     console.log('Query Engine URL is '+serverUrl)
     console.log('Admin Console URL is '+adminConsoleEndpoint)
     
