@@ -111,16 +111,10 @@ const makeRouter =  (ctx: AppContext) => {
                 .where('key', '=', req.body.key)
             const confitionRes = await conditionBuiler.execute()
 
-            let isMemoryMode = false
-            if(!process.env.FEEDGEN_SQLITE_LOCATION || process.env.FEEDGEN_SQLITE_LOCATION ===':memory:'){
-                isMemoryMode = true
-            }
-
             if(confitionRes.length===0){
                 res.json({
                     result:'NOT_FOUND',
-                    message:'Specified key not found. '+req.body.key,
-                    isMemoryMode:isMemoryMode
+                    message:'Specified key not found. '+req.body.key
                 })
                 return
             }
@@ -149,7 +143,7 @@ const makeRouter =  (ctx: AppContext) => {
                     privateFeed:obj.privateFeed,
                     limitCount:obj.limitCount,
                     recordCount:obj.recordCount,
-                    isMemoryMode:isMemoryMode
+                    queryEngineVersion:'v0.1.1'
                 }
             }
             res.json(returnObj)

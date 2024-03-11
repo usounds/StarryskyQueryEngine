@@ -49,54 +49,60 @@ export class ScpecificActorsSubscription {
     console.log('Query Engine URL is '+serverUrl)
     console.log('Admin Console URL is '+adminConsoleEndpoint)
     
-    try{
-      const result = await fetch(adminConsoleEndpoint+"/api/getD1Query",
-          {
-              method: 'post',headers: {
-                  'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({serverUrl:serverUrl})
+
+    if(process.env.FEEDGEN_HOSTNAME!=='example.com'){
+      try{
+        const result = await fetch(adminConsoleEndpoint+"/api/getD1Query",
+            {
+                method: 'post',headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({serverUrl:serverUrl})
+            }
+        );
+
+        const resultObject = await result.json()
+
+        if(resultObject.result==='OK'){
+          for(let record of resultObject.resultRecord){
+            let obj = {
+              key:          record.key ||'',
+              recordName:   record.recordName ||'',
+              query:        record.query ||'',
+              inputRegex:   record.inputRegex ||'',
+              invertRegex:  record.invertRegex,
+              refresh:      record.refresh||0,
+              lang:         record.lang,
+              labelDisable: record.labelDisable,
+              replyDisable: record.replyDisable,
+              imageOnly:    record.imageOnly,
+              initPost:     record.initPost||100,
+              pinnedPost:   record.pinnedPost,
+              limitCount:   record.limitCount||2000,
+              feedAvatar:   record.feedAvatar,
+              feedName:     record.feedName,
+              feedDescription:record.feedDescription,
+              includeAltText:record.includeAltText,
+              recordCount: 0
+            }
+
+            await this.db
+              .insertInto('conditions')
+              .values(obj)
+              .onConflict(oc => oc.doNothing())
+              .execute()
+
+            console.log('Admin Consoleから検索条件を復元しました：'+record.key)
+              
+
           }
-      );
-
-      const resultObject = await result.json()
-
-      if(resultObject.result==='OK'){
-        for(let record of resultObject.resultRecord){
-          let obj = {
-            key:          record.key ||'',
-            recordName:   record.recordName ||'',
-            query:        record.query ||'',
-            inputRegex:   record.inputRegex ||'',
-            invertRegex:  record.invertRegex,
-            refresh:      record.refresh||0,
-            lang:         record.lang,
-            labelDisable: record.labelDisable,
-            replyDisable: record.replyDisable,
-            imageOnly:    record.imageOnly,
-            initPost:     record.initPost||100,
-            pinnedPost:   record.pinnedPost,
-            limitCount:   record.limitCount||2000,
-            feedAvatar:   record.feedAvatar,
-            feedName:     record.feedName,
-            feedDescription:record.feedDescription,
-            includeAltText:record.includeAltText,
-            recordCount: 0
-          }
-
-          await this.db
-            .insertInto('conditions')
-            .values(obj)
-            .onConflict(oc => oc.doNothing())
-            .execute()
-
-          console.log('Admin Consoleから検索条件を復元しました：'+record.key)
-            
-
         }
+      }catch(e){
+        console.error('Admin Consoleへ接続できず、検索条件は復元できませんでした。'+e)
       }
-    }catch(e){
-      console.error('Admin Consoleへ接続できず、検索条件は復元できませんでした。'+e)
+    }else{
+      console.log('example.comが指定されているので、検索条件は復元しませんでした')
+
     }
 
     await this.reload()
@@ -107,10 +113,14 @@ export class ScpecificActorsSubscription {
 
     //ログイン
     if(!this.agent.hasSession){
-      await this.agent.login({
-        identifier: process.env.FEEDGEN_PUBLISHER_IDENTIFIER || '',
-        password: process.env.FEEDGEN_APP_PASSWORD || ''
-      })
+      if(this.agent.session !== undefined){
+        await this.agent.resumeSession(this.agent.session)
+      }else{
+        await this.agent.login({
+          identifier: process.env.FEEDGEN_PUBLISHER_IDENTIFIER || '',
+          password: process.env.FEEDGEN_APP_PASSWORD || ''
+        })
+      }
     }
 
     //検索条件取得
