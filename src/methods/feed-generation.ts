@@ -1,7 +1,6 @@
 import { InvalidRequestError } from '@atproto/xrpc-server'
 import { Server } from '../lexicon'
 import { AppContext } from '../config'
-import { validateAuth } from '../auth'
 import { AtUri } from '@atproto/syntax'
 import handler from '../algos/starrysky'
 
@@ -31,7 +30,7 @@ export default function (server: Server, ctx: AppContext) {
      * )
      */
 
-    const body = await handler(ctx, params,feedUri.rkey)
+    const body = await handler(ctx, params,feedUri.rkey,req)
     return {
       encoding: 'application/json',
       body: body,
