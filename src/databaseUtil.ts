@@ -31,7 +31,7 @@ const makeRouter =  (ctx: AppContext) => {
             }
 
 
-            const recordNameRegex = new RegExp(/^[a-z0-9]{1,15}$/)
+            const recordNameRegex = new RegExp(/^[a-z0-9-]{1,15}$/)
             
             if(!req.body.recordName.match(recordNameRegex)){
                 console.log('recordNameRegex error for:'+req.body.recordNameRegex)
