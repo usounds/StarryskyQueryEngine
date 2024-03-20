@@ -40,11 +40,10 @@ const makeRouter =  (ctx: AppContext) => {
 
             }
 
-            if(isNaN(Number(req.body.refresh))){
-                console.log('refresh error for:'+req.body.refresh)
-                res.status(500).json({result:'NOT_NUMBER_REFRESH',message:'Refreshは数字のみです。/Refresh should be number.'})
-                return
-
+            if (!/^-?\d+$/.test(req.body.refresh)) {
+                console.log('refresh error for:' + req.body.refresh);
+                res.status(500).json({ result: 'NOT_NUMBER_REFRESH', message: 'Refreshは整数のみです。/Refresh should be an integer.' });
+                return;
             }
 
             if(isNaN(Number(req.body.initPost))){
