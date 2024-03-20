@@ -143,7 +143,7 @@ const makeRouter =  (ctx: AppContext) => {
                     privateFeed:obj.privateFeed,
                     limitCount:obj.limitCount,
                     recordCount:obj.recordCount,
-                    queryEngineVersion:'v0.1.1'
+                    queryEngineVersion:'v0.1.2'
                 }
             }
             res.json(returnObj)
