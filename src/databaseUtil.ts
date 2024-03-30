@@ -31,20 +31,19 @@ const makeRouter =  (ctx: AppContext) => {
             }
 
 
-            const recordNameRegex = new RegExp(/^[a-zA-Z0-9]{1,15}$/)
+            const recordNameRegex = new RegExp(/^[a-z0-9-]{1,15}$/)
             
             if(!req.body.recordName.match(recordNameRegex)){
                 console.log('recordNameRegex error for:'+req.body.recordNameRegex)
-                res.status(500).json({result:'RECORDNAME_NOTALPHA',message:'RecordNameは半角英数の15文字以内です/RecordName shoud be 15 digit alphabets.'})
+                res.status(500).json({result:'RECORDNAME_NOTALPHA',message:'RecordNameは半角英数の15文字以内の小文字です/RecordName shoud be 15 digit lowercase alphabets.'})
                 return
 
             }
 
-            if(isNaN(Number(req.body.refresh))){
-                console.log('refresh error for:'+req.body.refresh)
-                res.status(500).json({result:'NOT_NUMBER_REFRESH',message:'Refreshは数字のみです。/Refresh should be number.'})
-                return
-
+            if (!/^-?\d+$/.test(req.body.refresh)) {
+                console.log('refresh error for:' + req.body.refresh);
+                res.status(500).json({ result: 'NOT_NUMBER_REFRESH', message: 'Refreshは整数のみです。/Refresh should be an integer.' });
+                return;
             }
 
             if(isNaN(Number(req.body.initPost))){
@@ -143,7 +142,7 @@ const makeRouter =  (ctx: AppContext) => {
                     privateFeed:obj.privateFeed,
                     limitCount:obj.limitCount,
                     recordCount:obj.recordCount,
-                    queryEngineVersion:'v0.1.1'
+                    queryEngineVersion:'v0.1.2'
                 }
             }
             res.json(returnObj)
