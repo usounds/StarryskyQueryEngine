@@ -326,12 +326,6 @@ export class ScpecificActorsSubscription {
           recordCount: recordcount + res.length
         }
 
-        this.db
-          .updateTable('conditions')
-          .set(updateObj)
-          .where('key', '=', obj.key)
-          .execute()
-
 
         if (updateObj.recordCount > obj.limitCount) {
           const deletePost = updateObj.recordCount - obj.limitCount
@@ -345,8 +339,16 @@ export class ScpecificActorsSubscription {
             .limit(deletePost)
             .execute()
 
+            updateObj.recordCount =  obj.limitCount
+
         }
 
+
+        this.db
+          .updateTable('conditions')
+          .set(updateObj)
+          .where('key', '=', obj.key)
+          .execute()
 
 
       } catch (e) {
