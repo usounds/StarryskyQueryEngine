@@ -40,7 +40,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, rkey: string
   }
 
   //ピン留め
-  if(recordNameHandler[0].pinnedPost!== null && recordNameHandler[0].pinnedPost!== undefined && recordNameHandler[0].pinnedPost!== '' ){
+  if(cursor === undefined && recordNameHandler[0].pinnedPost!== null && recordNameHandler[0].pinnedPost!== undefined && recordNameHandler[0].pinnedPost!== '' ){
       const pinnedPostDids = recordNameHandler[0].pinnedPost.split(',')
       pinnedPostDids.forEach((row) => feed.push({
         post: row,
