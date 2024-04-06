@@ -40,4 +40,5 @@ export type Conditions = {
   privateFeed: string | null
   feedAvatar: string | null
   recordCount: number
+  profileMatch: string | null
 }

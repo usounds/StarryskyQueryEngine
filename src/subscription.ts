@@ -45,7 +45,7 @@ export class ScpecificActorsSubscription {
       serverUrl = 'https://' + process.env.FEEDGEN_HOSTNAME
     }
 
-    console.log('Starrysky Query Engine:v0.1.2')
+    console.log('Starrysky Query Engine:v0.1.3')
     console.log('Query Engine URL is ' + serverUrl)
     console.log('Admin Console URL is ' + adminConsoleEndpoint)
 
@@ -187,11 +187,12 @@ export class ScpecificActorsSubscription {
         const invertRegexText = obj.invertRegex || ''
         const label = obj.labelDisable    //センシティブラベル付き投稿表示制御用フラグ
         const reply = obj.replyDisable    //リプライ表示抑制用フラグ
-        const alt = obj.includeAltText  //画像のALT文字列検索可否フラグ
+        const alt = obj.includeAltText    //画像のALT文字列検索可否フラグ
         const image = obj.imageOnly       //画像のみ抽出フラグ
-        const lang = obj.lang?.split(',')                     //言語フィルタ用配列
+        const lang = obj.lang?.split(',') //言語フィルタ用配列
         const pinnedPost = process.env.FEEDGEN_PINNED_POST || ''       //言語フィルタ用配列
         const initCount = obj.initPost || 100  //初期起動時の読み込み件数
+        const profileMatch = obj.profileMatch || ''  //プロフィールマッチ
 
         const inputRegex = new RegExp(inputRegexText, 'i')  //抽出正規表現
         const invertRegex = new RegExp(invertRegexText, 'i') //除外用正規表現
@@ -224,6 +225,35 @@ export class ScpecificActorsSubscription {
           //念のため検索件数をログだし
           cursor = Number(seachResults.data.cursor)
           console.log('API cursor:' + cursor + '(' + apiCall + '). Current post count:' + recordcount)
+
+          let profileDID: string[] = []
+          const userProfileStringsMap = new Map<string, string>()
+          let profileCounts = 0
+
+          if (profileMatch !== undefined && profileMatch !== "") {
+
+            for (let post of seachResults.data.posts) {
+              profileCounts++
+
+              if (!userProfileStringsMap.get(post.author.did)) {
+                profileDID.push(post.author.did)
+              }
+
+              if (profileDID.length == 25 || seachResults.data.posts.length == profileCounts) {
+                //プロフィール取得
+                const profileResult = await this.agent.app.bsky.actor.getProfiles({
+                  actors: profileDID
+                })
+
+                for (let profile of profileResult.data.profiles) {
+                  userProfileStringsMap.set(profile.did, profile.displayName + ' ' + profile.description)
+                }
+
+                profileDID = []
+
+              }
+            }
+          }
 
           for (let post of seachResults.data.posts) {
 
@@ -282,23 +312,21 @@ export class ScpecificActorsSubscription {
             }
 
             //プロファイルマッチが有効化されているか
-            /*
-            if(profiles !== undefined && profiles[0]!=="") {
-              for(const profile of profiles){
-                const [textTerm, profileRegexText] = profile.split('::')
-                const profileRegex = new RegExp( profileRegexText || '','i')//除外用正規表現
-    
-    
+            if (profileMatch !== undefined && profileMatch !== "") {
+              const [textTerm, profileRegexText] = profileMatch.split('::')
+              const textTermRegex = new RegExp(textTerm || '', 'i')       //プロフィールマッチ用正規表現
+              const profileRegex = new RegExp(profileRegexText || '', 'i')//除外用正規表現
+
+              //プロフィールマッチ用の文言が含まれている
+              if (text.match(textTermRegex)) {
+                const profileText = userProfileStringsMap.get(post.author.did) || ''
+
                 //指定された文字が投稿本文に含まれる場合は、Regex指定された文字列がプロフィールになければ除外
-                if(text.indexOf(textTerm) !== -1 && !text.match(profileRegex)){
-                  console.log(text)
-                  console.log(textTerm)
-                  console.log(profileRegexText)
+                if (!profileText.match(profileRegex)) {
                   continue
                 }
               }
             }
-            */
 
             //投稿をDBに保存
             recordcount++
@@ -330,7 +358,7 @@ export class ScpecificActorsSubscription {
         if (updateObj.recordCount > obj.limitCount) {
           const deletePost = updateObj.recordCount - obj.limitCount
 
-          console.log('Limit:['+obj.limitCount+'] delete post counts:'+deletePost)
+          console.log('Limit:[' + obj.limitCount + '] delete post counts:' + deletePost)
 
           this.db
             .deleteFrom('post')
@@ -339,7 +367,7 @@ export class ScpecificActorsSubscription {
             .limit(deletePost)
             .execute()
 
-            updateObj.recordCount =  obj.limitCount
+          updateObj.recordCount = obj.limitCount
 
         }
 

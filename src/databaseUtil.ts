@@ -30,7 +30,6 @@ const makeRouter = (ctx: AppContext) => {
                 return
             }
 
-
             const recordNameRegex = new RegExp(/^[a-z0-9-]{1,15}$/)
 
             if (!req.body.recordName.match(recordNameRegex)) {
@@ -60,6 +59,20 @@ const makeRouter = (ctx: AppContext) => {
 
             }
 
+            if(req.body.profileMatch){
+
+                const [textTerm, profileRegexText] = req.body.profileMatch.split('::')
+
+                try {
+                    new RegExp(textTerm, 'i')
+                    new RegExp(profileRegexText, 'i')
+                } catch (err) {
+                    console.log('profileMatch error for:' + req.body.key)
+                    res.status(500).json({ result: 'PROFILE_MATCH_REGEX_ERROR', message: 'profileMatchの正規表現が正しくありません。/profileMatch error. Please input valid regex.' })
+                    return
+                }
+            }
+
             ctx.db
                 .deleteFrom('conditions')
                 .where('key', '=', req.body.key)
@@ -85,6 +98,7 @@ const makeRouter = (ctx: AppContext) => {
                 includeAltText: req.body.includeAltText,
                 feedDescription: req.body.feedDescription,
                 recordCount: 0,
+                profileMatch: req.body.profileMatch,
             }
 
             ctx.db
@@ -142,14 +156,15 @@ const makeRouter = (ctx: AppContext) => {
                     privateFeed: obj.privateFeed,
                     limitCount: obj.limitCount,
                     recordCount: obj.recordCount,
-                    queryEngineVersion: 'v0.1.2'
+                    profileMatch: obj.profileMatch,
+                    queryEngineVersion: 'v0.1.3'
                 }
             }
             res.json(returnObj)
         }
     })
 
-    //フィード削除s
+    //フィード削除
     router.post('/deleteCondition', async (req: express.Request, res) => {
         console.log('Operation mode:deleteCondition:' + req.body.key)
         const requestWebPasskey = req.headers['x-starrtsky-webpasskey']
@@ -167,6 +182,11 @@ const makeRouter = (ctx: AppContext) => {
                 .where('key', '=', req.body.key)
                 .execute()
         }
+
+        const returnObj = {
+            result: "OK",
+        }
+        res.json(returnObj)
     })
 
     return router
