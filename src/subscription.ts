@@ -83,6 +83,7 @@ export class ScpecificActorsSubscription {
               feedName: record.feedName,
               feedDescription: record.feedDescription,
               includeAltText: record.includeAltText,
+              profileMatch: record.profileMatch,
               recordCount: 0
             }
 
