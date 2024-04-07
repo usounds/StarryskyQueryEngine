@@ -240,7 +240,8 @@ export class ScpecificActorsSubscription {
                 profileDID.push(post.author.did)
               }
 
-              if (profileDID.length == 25 || seachResults.data.posts.length == profileCounts) {
+              //DIDが25件に達した、または、現在の処理件数が投稿件数に一致した場合。ただし、上限に達したが検索用DID配列が空の場合は処理をしない
+              if ((profileDID.length == 25 || seachResults.data.posts.length == profileCounts)&& profileDID.length != 0) {
                 //プロフィール取得
                 const profileResult = await this.agent.app.bsky.actor.getProfiles({
                   actors: profileDID
