@@ -319,7 +319,7 @@ export class ScpecificActorsSubscription {
 
               //プロフィールマッチ用の文言が含まれている
               if (text.match(textTermRegex)) {
-                const profileText = userProfileStringsMap.get(post.author.did) || ''
+                const profileText = userProfileStringsMap.get(post.author.did) + ' ' + text
 
                 //指定された文字が投稿本文に含まれる場合は、Regex指定された文字列がプロフィールになければ除外
                 if (!profileText.match(profileRegex)) {
