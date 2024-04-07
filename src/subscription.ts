@@ -195,7 +195,7 @@ export class ScpecificActorsSubscription {
         const initCount = obj.initPost || 100  //初期起動時の読み込み件数
         const profileMatch = obj.profileMatch || ''  //プロフィールマッチ
 
-        const inputRegex = new RegExp(inputRegexText, 'i')  //抽出正規表現
+        const inputRegex = new RegExp(inputRegexText, 'ig')  //抽出正規表現
         const invertRegex = new RegExp(invertRegexText, 'i') //除外用正規表現
 
         let recordcount = 0;
@@ -276,10 +276,10 @@ export class ScpecificActorsSubscription {
             }
 
             //INPUTにマッチしないものは除外
-            if (!text.match(inputRegex)) {
+            const matches = (text.match(inputRegex) || []).length
+            if (matches == 0) {
               continue
             }
-
 
             //Invertにマッチしたものは除外
             if (invertRegexText !== '' && text.match(invertRegex)) {
@@ -312,22 +312,25 @@ export class ScpecificActorsSubscription {
               continue
             }
 
-            //プロファイルマッチが有効化されているか
-            if (profileMatch !== undefined && profileMatch !== "") {
-              const [textTerm, profileRegexText] = profileMatch.split('::')
-              const textTermRegex = new RegExp(textTerm || '', 'i')       //プロフィールマッチ用正規表現
-              const profileRegex = new RegExp(profileRegexText || '', 'i')//除外用正規表現
+            //プロフィールマッチ用の文言が含まれている、かつ、プロフィールマッチ以外の文言が含まれていない場合
+          if (profileMatch !== undefined && profileMatch !== "") {
+            const [textTerm, profileRegexText] = profileMatch.split('::')
+            const textTermRegex = new RegExp(textTerm || '', 'ig')       //プロフィールマッチ用正規表現
+            const profileRegex = new RegExp(profileRegexText || '', 'i')//除外用正規表現
 
-              //プロフィールマッチ用の文言が含まれている
-              if (text.match(textTermRegex)) {
-                const profileText = userProfileStringsMap.get(post.author.did) + ' ' + text
+            const matchesWithProfile = (text.match(textTermRegex) || []).length
 
-                //指定された文字が投稿本文に含まれる場合は、Regex指定された文字列がプロフィールになければ除外
-                if (!profileText.match(profileRegex)) {
-                  continue
-                }
+            //プロフィールマッチ用の文言が含まれている、かつ、プロフィールマッチ以外の文言が含まれていない場合
+            if (matchesWithProfile > 0 && (matches - matchesWithProfile)==0) {
+              //const profileText = userProfileStringsMap.get(post.author.did) + ' ' + text
+              const profileText = userProfileStringsMap.get(post.author.did) || ''
+
+              //指定された文字が投稿本文に含まれる場合は、Regex指定された文字列がプロフィールになければ除外
+              if (!profileText.match(profileRegex)) {
+                continue
               }
             }
+          }
 
             //投稿をDBに保存
             recordcount++
