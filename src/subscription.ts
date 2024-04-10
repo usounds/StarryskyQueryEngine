@@ -241,7 +241,7 @@ export class ScpecificActorsSubscription {
               }
 
               //DIDが25件に達した、または、現在の処理件数が投稿件数に一致した場合。ただし、上限に達したが検索用DID配列が空の場合は処理をしない
-              if ((profileDID.length == 25 || seachResults.data.posts.length == profileCounts)&& profileDID.length != 0) {
+              if ((profileDID.length == 25 || seachResults.data.posts.length == profileCounts) && profileDID.length != 0) {
                 //プロフィール取得
                 const profileResult = await this.agent.app.bsky.actor.getProfiles({
                   actors: profileDID
@@ -313,25 +313,34 @@ export class ScpecificActorsSubscription {
               continue
             }
 
-            //プロフィールマッチ用の文言が含まれている、かつ、プロフィールマッチ以外の文言が含まれていない場合
-          if (profileMatch !== undefined && profileMatch !== "") {
-            const [textTerm, profileRegexText] = profileMatch.split('::')
-            const textTermRegex = new RegExp(textTerm || '', 'ig')       //プロフィールマッチ用正規表現
-            const profileRegex = new RegExp(profileRegexText || '', 'i')//除外用正規表現
-
-            const matchesWithProfile = (text.match(textTermRegex) || []).length
-
-            //プロフィールマッチ用の文言が含まれている、かつ、プロフィールマッチ以外の文言が含まれていない場合
-            if (matchesWithProfile > 0 && (matches - matchesWithProfile)==0) {
-              //const profileText = userProfileStringsMap.get(post.author.did) + ' ' + text
-              const profileText = userProfileStringsMap.get(post.author.did) || ''
-
-              //指定された文字が投稿本文に含まれる場合は、Regex指定された文字列がプロフィールになければ除外
-              if (!profileText.match(profileRegex)) {
-                continue
+            //プロファイルマッチが有効化されており、かつ、検索ワードの1つにしか合致していない
+            let skip = false
+            if (profileMatch !== undefined && profileMatch !== "") {
+              const [textTerm, profileRegexText] = profileMatch.split('::')
+              const textTermRegex = new RegExp(textTerm || '', 'ig')       //プロフィールマッチ用正規表現
+              const profileRegex = new RegExp(profileRegexText || '', 'i')//除外用正規表現
+  
+              const matchesWithProfile = (text.match(textTermRegex) || []).length
+  
+              console.log('text:' + text)
+              console.log('matchesWithProfile:' + text.match(textTermRegex) + '  matches:' + matches)
+  
+              //プロフィールマッチ用の文言が含まれている、かつ、プロフィールマッチ以外の文言が含まれていない場合
+              if (matchesWithProfile > 0 && (matches - matchesWithProfile) == 0) {
+                //const profileText = userProfileStringsMap.get(post.author.did) + ' ' + text
+                const profileText = userProfileStringsMap.get(post.author.did) || ''
+  
+                console.log(profileText.match(profileRegex))
+  
+                //指定された文字が投稿本文に含まれる場合は、Regex指定された文字列がプロフィールになければ除外
+                if (!profileText.match(profileRegex)) {
+                  skip = true
+                  continue
+                }
               }
             }
-          }
+  
+            if(skip )continue
 
             //投稿をDBに保存
             recordcount++
