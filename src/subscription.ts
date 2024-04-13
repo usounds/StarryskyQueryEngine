@@ -320,15 +320,19 @@ export class ScpecificActorsSubscription {
 
               const matchesWithProfile = (text.match(textTermRegex) || []).length
 
-              console.log('text:' + text)
-              console.log('matchesWithProfile:' + text.match(textTermRegex) + '  matches:' + matches)
+              if (process.env.DEBUG_MODE) {
+                console.log('text:' + text)
+                console.log('matchesWithProfile:' + text.match(textTermRegex) + '  matches:' + matches)
+              }
 
               //プロフィールマッチ用の文言が含まれている、かつ、プロフィールマッチ以外の文言が含まれていない場合
               if (matchesWithProfile > 0 && (matches - matchesWithProfile) == 0) {
                 //const profileText = userProfileStringsMap.get(post.author.did) + ' ' + text
                 const profileText = userProfileStringsMap.get(post.author.did) || ''
 
-                console.log(profileText.match(profileRegex))
+                if (process.env.DEBUG_MODE) {
+                  console.log(profileText.match(profileRegex))
+                }
 
                 //指定された文字が投稿本文に含まれる場合は、Regex指定された文字列がプロフィールになければ除外
                 if (!profileText.match(profileRegex)) {
