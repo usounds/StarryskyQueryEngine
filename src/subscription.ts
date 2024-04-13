@@ -210,13 +210,19 @@ export class ScpecificActorsSubscription {
           console.log('invertRegexText:' + invertRegexText)
         }
 
+        //言語フィルタ
+        let searchQuery = query
+        if (lang) {
+          searchQuery = searchQuery + ' lang:' + lang
+        }
+
         //初回起動モードは既定の件数まで処理を継続
         //差分起動モードは前回の実行に追いつくまで処理を継続
         //ただし、API検索が100回に到達する、または、APIの検索が終了した場合は処理を止める
         while (((!init && !catchUp) || (init && recordcount < initCount)) && cursor % 100 == 0 && apiCall < 100) {
           //検索API実行
           const params_search: QueryParamsSearch = {
-            q: query,
+            q: searchQuery,
             limit: 100,
             cursor: String(cursor)
           }
@@ -295,14 +301,6 @@ export class ScpecificActorsSubscription {
               continue
             }
 
-            //言語フィルターが有効化されているか
-            if (lang !== undefined && lang[0] !== "") {
-              //投稿の言語が未設定の場合は除外
-              if (record.langs === undefined) continue
-              //言語が一致しない場合は除外
-              if (!getIsDuplicate(record.langs, lang)) continue
-            }
-
             //ラベルが有効な場合は、ラベルが何かついていたら除外
             if (label === "true" && post.labels?.length !== 0) {
               continue
@@ -319,19 +317,19 @@ export class ScpecificActorsSubscription {
               const [textTerm, profileRegexText] = profileMatch.split('::')
               const textTermRegex = new RegExp(textTerm || '', 'ig')       //プロフィールマッチ用正規表現
               const profileRegex = new RegExp(profileRegexText || '', 'i')//除外用正規表現
-  
+
               const matchesWithProfile = (text.match(textTermRegex) || []).length
-  
+
               console.log('text:' + text)
               console.log('matchesWithProfile:' + text.match(textTermRegex) + '  matches:' + matches)
-  
+
               //プロフィールマッチ用の文言が含まれている、かつ、プロフィールマッチ以外の文言が含まれていない場合
               if (matchesWithProfile > 0 && (matches - matchesWithProfile) == 0) {
                 //const profileText = userProfileStringsMap.get(post.author.did) + ' ' + text
                 const profileText = userProfileStringsMap.get(post.author.did) || ''
-  
+
                 console.log(profileText.match(profileRegex))
-  
+
                 //指定された文字が投稿本文に含まれる場合は、Regex指定された文字列がプロフィールになければ除外
                 if (!profileText.match(profileRegex)) {
                   skip = true
@@ -339,8 +337,8 @@ export class ScpecificActorsSubscription {
                 }
               }
             }
-  
-            if(skip )continue
+
+            if (skip) continue
 
             //投稿をDBに保存
             recordcount++
