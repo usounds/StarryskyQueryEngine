@@ -127,7 +127,8 @@ const makeRouter = (ctx: AppContext) => {
             if (confitionRes.length === 0) {
                 res.json({
                     result: 'NOT_FOUND',
-                    message: 'Specified key not found. ' + req.body.key
+                    message: 'Specified key not found. ' + req.body.key,
+                    queryEngineVersion: 'v0.1.3'
                 })
                 return
             }
