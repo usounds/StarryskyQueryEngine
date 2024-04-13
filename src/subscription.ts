@@ -4,6 +4,11 @@ import { QueryParams as QueryParamsSearch } from './lexicon/types/app/bsky/feed/
 import { Database } from './db'
 import { PostView } from './lexicon/types/app/bsky/feed/defs'
 import fetch from 'node-fetch'
+import * as pkg from "../package.json"
+
+export function appVersion(): string {
+    return pkg.version;
+}
 
 type record = {
   createdAt: string
@@ -45,7 +50,7 @@ export class ScpecificActorsSubscription {
       serverUrl = 'https://' + process.env.FEEDGEN_HOSTNAME
     }
 
-    console.log('Starrysky Query Engine:v0.1.3')
+    console.log('Starrysky Query Engine:'+appVersion())
     console.log('Query Engine URL is ' + serverUrl)
     console.log('Admin Console URL is ' + adminConsoleEndpoint)
 

@@ -1,5 +1,6 @@
 import express from 'express'
 import { AppContext } from './config'
+import { appVersion } from "./subscription"
 
 const makeRouter = (ctx: AppContext) => {
     const router = express.Router()
@@ -59,7 +60,7 @@ const makeRouter = (ctx: AppContext) => {
 
             }
 
-            if(req.body.profileMatch){
+            if (req.body.profileMatch) {
 
                 const [textTerm, profileRegexText] = req.body.profileMatch.split('::')
 
@@ -128,7 +129,7 @@ const makeRouter = (ctx: AppContext) => {
                 res.json({
                     result: 'NOT_FOUND',
                     message: 'Specified key not found. ' + req.body.key,
-                    queryEngineVersion: 'v0.1.3'
+                    queryEngineVersion: appVersion()
                 })
                 return
             }
@@ -158,7 +159,7 @@ const makeRouter = (ctx: AppContext) => {
                     limitCount: obj.limitCount,
                     recordCount: obj.recordCount,
                     profileMatch: obj.profileMatch,
-                    queryEngineVersion: 'v0.1.3'
+                    queryEngineVersion: appVersion()
                 }
             }
             res.json(returnObj)
