@@ -195,7 +195,7 @@ export class ScpecificActorsSubscription {
         const reply = obj.replyDisable    //リプライ表示抑制用フラグ
         const alt = obj.includeAltText    //画像のALT文字列検索可否フラグ
         const image = obj.imageOnly       //画像のみ抽出フラグ
-        const lang = obj.lang?.split(',') //言語フィルタ用配列
+        const lang = obj.lang //言語フィルタ用配列
         const pinnedPost = process.env.FEEDGEN_PINNED_POST || ''       //言語フィルタ用配列
         const initCount = obj.initPost || 100  //初期起動時の読み込み件数
         const profileMatch = obj.profileMatch || ''  //プロフィールマッチ
