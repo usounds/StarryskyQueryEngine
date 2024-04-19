@@ -1,10 +1,10 @@
 {
   "name": "feed-generator",
-  "version": "1.0.0",
-  "description": "atproto feed generator starter kit",
+  "version": "v0.1.3",
+  "description": "StarryskyQueryEngine",
   "main": "index.js",
-  "repository": "git@github.com:bluesky-social/feed-generator.git",
-  "author": "dholms <dtholmgren@gmail.com>",
+  "repository": "git@github.com:usounds/StarryskyQueryEngine.git",
+  "author": "usounds",
   "license": "MIT",
   "scripts": {
     "publishFeed": "ts-node scripts/publishFeedGen.ts",

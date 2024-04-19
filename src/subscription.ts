@@ -4,6 +4,11 @@ import { QueryParams as QueryParamsSearch } from './lexicon/types/app/bsky/feed/
 import { Database } from './db'
 import { PostView } from './lexicon/types/app/bsky/feed/defs'
 import fetch from 'node-fetch'
+import * as pkg from "../package.json"
+
+export function appVersion(): string {
+    return pkg.version;
+}
 
 type record = {
   createdAt: string
@@ -45,7 +50,7 @@ export class ScpecificActorsSubscription {
       serverUrl = 'https://' + process.env.FEEDGEN_HOSTNAME
     }
 
-    console.log('Starrysky Query Engine:v0.1.2')
+    console.log('Starrysky Query Engine:'+appVersion())
     console.log('Query Engine URL is ' + serverUrl)
     console.log('Admin Console URL is ' + adminConsoleEndpoint)
 
@@ -83,6 +88,7 @@ export class ScpecificActorsSubscription {
               feedName: record.feedName,
               feedDescription: record.feedDescription,
               includeAltText: record.includeAltText,
+              profileMatch: record.profileMatch,
               recordCount: 0
             }
 
@@ -187,13 +193,14 @@ export class ScpecificActorsSubscription {
         const invertRegexText = obj.invertRegex || ''
         const label = obj.labelDisable    //センシティブラベル付き投稿表示制御用フラグ
         const reply = obj.replyDisable    //リプライ表示抑制用フラグ
-        const alt = obj.includeAltText  //画像のALT文字列検索可否フラグ
+        const alt = obj.includeAltText    //画像のALT文字列検索可否フラグ
         const image = obj.imageOnly       //画像のみ抽出フラグ
-        const lang = obj.lang?.split(',')                     //言語フィルタ用配列
+        const lang = obj.lang //言語フィルタ用配列
         const pinnedPost = process.env.FEEDGEN_PINNED_POST || ''       //言語フィルタ用配列
         const initCount = obj.initPost || 100  //初期起動時の読み込み件数
+        const profileMatch = obj.profileMatch || ''  //プロフィールマッチ
 
-        const inputRegex = new RegExp(inputRegexText, 'i')  //抽出正規表現
+        const inputRegex = new RegExp(inputRegexText, 'ig')  //抽出正規表現
         const invertRegex = new RegExp(invertRegexText, 'i') //除外用正規表現
 
         let recordcount = 0;
@@ -208,13 +215,19 @@ export class ScpecificActorsSubscription {
           console.log('invertRegexText:' + invertRegexText)
         }
 
+        //言語フィルタ
+        let searchQuery = query
+        if (lang) {
+          searchQuery = searchQuery + ' lang:' + lang
+        }
+
         //初回起動モードは既定の件数まで処理を継続
         //差分起動モードは前回の実行に追いつくまで処理を継続
         //ただし、API検索が100回に到達する、または、APIの検索が終了した場合は処理を止める
         while (((!init && !catchUp) || (init && recordcount < initCount)) && cursor % 100 == 0 && apiCall < 100) {
           //検索API実行
           const params_search: QueryParamsSearch = {
-            q: query,
+            q: searchQuery,
             limit: 100,
             cursor: String(cursor)
           }
@@ -224,6 +237,36 @@ export class ScpecificActorsSubscription {
           //念のため検索件数をログだし
           cursor = Number(seachResults.data.cursor)
           console.log('API cursor:' + cursor + '(' + apiCall + '). Current post count:' + recordcount)
+
+          let profileDID: string[] = []
+          const userProfileStringsMap = new Map<string, string>()
+          let profileCounts = 0
+
+          if (profileMatch !== undefined && profileMatch !== "") {
+
+            for (let post of seachResults.data.posts) {
+              profileCounts++
+
+              if (!userProfileStringsMap.get(post.author.did)) {
+                profileDID.push(post.author.did)
+              }
+
+              //DIDが25件に達した、または、現在の処理件数が投稿件数に一致した場合。ただし、上限に達したが検索用DID配列が空の場合は処理をしない
+              if ((profileDID.length == 25 || seachResults.data.posts.length == profileCounts) && profileDID.length != 0) {
+                //プロフィール取得
+                const profileResult = await this.agent.app.bsky.actor.getProfiles({
+                  actors: profileDID
+                })
+
+                for (let profile of profileResult.data.profiles) {
+                  userProfileStringsMap.set(profile.did, profile.displayName + ' ' + profile.description)
+                }
+
+                profileDID = []
+
+              }
+            }
+          }
 
           for (let post of seachResults.data.posts) {
 
@@ -245,10 +288,10 @@ export class ScpecificActorsSubscription {
             }
 
             //INPUTにマッチしないものは除外
-            if (!text.match(inputRegex)) {
+            const matches = (text.match(inputRegex) || []).length
+            if (matches == 0) {
               continue
             }
-
 
             //Invertにマッチしたものは除外
             if (invertRegexText !== '' && text.match(invertRegex)) {
@@ -263,14 +306,6 @@ export class ScpecificActorsSubscription {
               continue
             }
 
-            //言語フィルターが有効化されているか
-            if (lang !== undefined && lang[0] !== "") {
-              //投稿の言語が未設定の場合は除外
-              if (record.langs === undefined) continue
-              //言語が一致しない場合は除外
-              if (!getIsDuplicate(record.langs, lang)) continue
-            }
-
             //ラベルが有効な場合は、ラベルが何かついていたら除外
             if (label === "true" && post.labels?.length !== 0) {
               continue
@@ -281,24 +316,38 @@ export class ScpecificActorsSubscription {
               continue
             }
 
-            //プロファイルマッチが有効化されているか
-            /*
-            if(profiles !== undefined && profiles[0]!=="") {
-              for(const profile of profiles){
-                const [textTerm, profileRegexText] = profile.split('::')
-                const profileRegex = new RegExp( profileRegexText || '','i')//除外用正規表現
-    
-    
+            //プロファイルマッチが有効化されており、かつ、検索ワードの1つにしか合致していない
+            let skip = false
+            if (profileMatch !== undefined && profileMatch !== "") {
+              const [textTerm, profileRegexText] = profileMatch.split('::')
+              const textTermRegex = new RegExp(textTerm || '', 'ig')       //プロフィールマッチ用正規表現
+              const profileRegex = new RegExp(profileRegexText || '', 'i')//除外用正規表現
+
+              const matchesWithProfile = (text.match(textTermRegex) || []).length
+
+              if (process.env.DEBUG_MODE) {
+                console.log('text:' + text)
+                console.log('matchesWithProfile:' + text.match(textTermRegex) + '  matches:' + matches)
+              }
+
+              //プロフィールマッチ用の文言が含まれている、かつ、プロフィールマッチ以外の文言が含まれていない場合
+              if (matchesWithProfile > 0 && (matches - matchesWithProfile) == 0) {
+                //const profileText = userProfileStringsMap.get(post.author.did) + ' ' + text
+                const profileText = userProfileStringsMap.get(post.author.did) || ''
+
+                if (process.env.DEBUG_MODE) {
+                  console.log(profileText.match(profileRegex))
+                }
+
                 //指定された文字が投稿本文に含まれる場合は、Regex指定された文字列がプロフィールになければ除外
-                if(text.indexOf(textTerm) !== -1 && !text.match(profileRegex)){
-                  console.log(text)
-                  console.log(textTerm)
-                  console.log(profileRegexText)
+                if (!profileText.match(profileRegex)) {
+                  skip = true
                   continue
                 }
               }
             }
-            */
+
+            if (skip) continue
 
             //投稿をDBに保存
             recordcount++
@@ -330,7 +379,7 @@ export class ScpecificActorsSubscription {
         if (updateObj.recordCount > obj.limitCount) {
           const deletePost = updateObj.recordCount - obj.limitCount
 
-          console.log('Limit:['+obj.limitCount+'] delete post counts:'+deletePost)
+          console.log('Limit:[' + obj.limitCount + '] delete post counts:' + deletePost)
 
           this.db
             .deleteFrom('post')
@@ -339,7 +388,7 @@ export class ScpecificActorsSubscription {
             .limit(deletePost)
             .execute()
 
-            updateObj.recordCount =  obj.limitCount
+          updateObj.recordCount = obj.limitCount
 
         }
 

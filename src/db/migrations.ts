@@ -46,6 +46,7 @@ migrations['001'] = {
       .addColumn('limitCount', 'integer', (col) => col.notNull())
       .addColumn('privateFeed', 'varchar')
       .addColumn('feedAvatar', 'varchar')
+      .addColumn('profileMatch', 'varchar')
       .addColumn('recordCount', 'integer', (col) => col.notNull())
       .execute()
   },
