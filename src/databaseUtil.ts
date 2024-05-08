@@ -100,6 +100,9 @@ const makeRouter = (ctx: AppContext) => {
                 feedDescription: req.body.feedDescription,
                 recordCount: 0,
                 profileMatch: req.body.profileMatch,
+                customLabelerDid: req.body.customLabelerDid,
+                customLabelerLabelValues: req.body.customLabelerLabelValues,
+                embedExternalUrl:req.body.embedExternalUrl,
             }
 
             ctx.db
@@ -159,6 +162,9 @@ const makeRouter = (ctx: AppContext) => {
                     limitCount: obj.limitCount,
                     recordCount: obj.recordCount,
                     profileMatch: obj.profileMatch,
+                    customLabelerDid: obj.customLabelerDid,
+                    customLabelerLabelValues: obj.customLabelerLabelValues,
+                    embedExternalUrl:obj.embedExternalUrl,
                     queryEngineVersion: appVersion()
                 }
             }

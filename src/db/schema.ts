@@ -41,4 +41,7 @@ export type Conditions = {
   feedAvatar: string | null
   recordCount: number
   profileMatch: string | null
+  customLabelerDid: string | null
+  customLabelerLabelValues: string | null
+  embedExternalUrl: string | null
 }

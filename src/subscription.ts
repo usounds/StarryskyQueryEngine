@@ -7,7 +7,7 @@ import fetch from 'node-fetch'
 import * as pkg from "../package.json"
 
 export function appVersion(): string {
-    return pkg.version;
+  return pkg.version;
 }
 
 type record = {
@@ -17,6 +17,9 @@ type record = {
   reply: {}
   embed?: {
     images?: imageObject[]
+    external?: {
+      uri?: string
+    }
   }
 }
 
@@ -50,7 +53,7 @@ export class ScpecificActorsSubscription {
       serverUrl = 'https://' + process.env.FEEDGEN_HOSTNAME
     }
 
-    console.log('Starrysky Query Engine:'+appVersion())
+    console.log('Starrysky Query Engine:' + appVersion())
     console.log('Query Engine URL is ' + serverUrl)
     console.log('Admin Console URL is ' + adminConsoleEndpoint)
 
@@ -89,6 +92,8 @@ export class ScpecificActorsSubscription {
               feedDescription: record.feedDescription,
               includeAltText: record.includeAltText,
               profileMatch: record.profileMatch,
+              customLabelerDid: record.customLabelerDid,
+              customLabelerLabelValues: record.customLabelerLabelValues,
               recordCount: 0
             }
 
@@ -196,9 +201,11 @@ export class ScpecificActorsSubscription {
         const alt = obj.includeAltText    //画像のALT文字列検索可否フラグ
         const image = obj.imageOnly       //画像のみ抽出フラグ
         const lang = obj.lang //言語フィルタ用配列
-        const pinnedPost = process.env.FEEDGEN_PINNED_POST || ''       //言語フィルタ用配列
         const initCount = obj.initPost || 100  //初期起動時の読み込み件数
         const profileMatch = obj.profileMatch || ''  //プロフィールマッチ
+        const customLabelerDid = obj.customLabelerDid //カスタムラベラー
+        const customLabelerLabelValues = obj.customLabelerLabelValues //カスタムラベラーのラベル値
+        const embedExternalUrl = obj.embedExternalUrl || 'false'
 
         const inputRegex = new RegExp(inputRegexText, 'ig')  //抽出正規表現
         const invertRegex = new RegExp(invertRegexText, 'i') //除外用正規表現
@@ -220,6 +227,17 @@ export class ScpecificActorsSubscription {
         if (lang) {
           searchQuery = searchQuery + ' lang:' + lang
         }
+
+        //公式ラベラーをデフォルトセット
+        let labelerDid: string[] = ['did:plc:ar7c4by46qjdydhdevvrndac']
+
+        //カスタムラベラーが入力されていたらセット
+        if (customLabelerDid) {
+          labelerDid.push(customLabelerDid)
+
+        }
+
+        this.agent.configureLabelersHeader(labelerDid)
 
         //初回起動モードは既定の件数まで処理を継続
         //差分起動モードは前回の実行に追いつくまで処理を継続
@@ -293,6 +311,11 @@ export class ScpecificActorsSubscription {
               continue
             }
 
+            //埋め込みURL
+            if (embedExternalUrl === 'true' && record.embed?.external?.uri) {
+              text = text + '\n' + record.embed?.external?.uri
+            }
+
             //Invertにマッチしたものは除外
             if (invertRegexText !== '' && text.match(invertRegex)) {
               continue
@@ -306,10 +329,45 @@ export class ScpecificActorsSubscription {
               continue
             }
 
-            //ラベルが有効な場合は、ラベルが何かついていたら除外
-            if (label === "true" && post.labels?.length !== 0) {
+            //ラベルの仕分け
+            let officialLabels: string[] = []
+            let customLabels: string[] = []
+
+            if (post.labels) {
+              // seachResults.data.posts[0].labels配列の各要素に対して処理を行う
+              post.labels.map((label: any) => {
+                // 後付けラベル
+                if (label.ver) {
+                  // 公式ラベラー
+                  if (label.src === 'did:plc:ar7c4by46qjdydhdevvrndac') {
+                    officialLabels.push(label.val)
+                  } else {
+                    // カスタムラベラー
+                    customLabels.push(label.val)
+                  }
+                } else {
+                  // セルフラベル
+                  officialLabels.push(label.val + '(self)');
+                }
+              })
+            }
+
+            //公式ラベルが有効な場合は、ラベルが何かついていたら除外
+            if (label === "true" && officialLabels.length !== 0) {
               continue
             }
+
+            //カスタムラベラーのラベルに値があれば比較する
+            let skip = false
+            if (customLabelerLabelValues) {
+              const labels: string[] = customLabelerLabelValues.split(',')
+              if (getIsDuplicate(labels, customLabels)) {
+                skip = true
+                continue
+              }
+            }
+
+            if (skip) continue
 
             //リプライ無効の場合は、リプライを除外
             if (reply === "true" && record.reply !== undefined) {
@@ -317,7 +375,7 @@ export class ScpecificActorsSubscription {
             }
 
             //プロファイルマッチが有効化されており、かつ、検索ワードの1つにしか合致していない
-            let skip = false
+            skip = false
             if (profileMatch !== undefined && profileMatch !== "") {
               const [textTerm, profileRegexText] = profileMatch.split('::')
               const textTermRegex = new RegExp(textTerm || '', 'ig')       //プロフィールマッチ用正規表現

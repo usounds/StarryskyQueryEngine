@@ -47,6 +47,9 @@ migrations['001'] = {
       .addColumn('privateFeed', 'varchar')
       .addColumn('feedAvatar', 'varchar')
       .addColumn('profileMatch', 'varchar')
+      .addColumn('customLabelerDid', 'varchar')
+      .addColumn('customLabelerLabelValues', 'varchar')
+      .addColumn('embedExternalUrl', 'varchar')
       .addColumn('recordCount', 'integer', (col) => col.notNull())
       .execute()
   },
