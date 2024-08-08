@@ -13,10 +13,10 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@atproto/api": "^0.12.7",
+    "@atproto/api": "^0.12.29",
     "@atproto/identity": "^0.4.0",
     "@atproto/lexicon": "^0.4.0",
-    "@atproto/repo": "^0.4.0",
+    "@atproto/repo": "^0.4.1",
     "@atproto/syntax": "^0.3.0",
     "@atproto/xrpc-server": "^0.6.0",
     "better-sqlite3": "^8.3.0",
