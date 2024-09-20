@@ -10,6 +10,7 @@ import { ScpecificActorsSubscription } from './subscription'
 import { AppContext, Config } from './config'
 import wellKnown from './well-known'
 import databaseUtil from './databaseUtil'
+import {WebSocketReceiver} from './jerstream'
 
 export class FeedGenerator {
   public app: express.Application
@@ -54,6 +55,10 @@ export class FeedGenerator {
       db,
       didResolver,
       cfg,
+    }
+
+    if(cfg.jetstreamEndpoint){
+        const jetstream = new WebSocketReceiver(cfg.jetstreamEndpoint+'/subscribe?wantedCollections=app.bsky.feed.post')
     }
 
     app.use(express.json());

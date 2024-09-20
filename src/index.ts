@@ -27,6 +27,7 @@ const run = async () => {
       maybeInt(process.env.FEEDGEN_SUBSCRIPTION_RECONNECT_DELAY) ?? 3000,
     hostname,
     serviceDid,
+    jetstreamEndpoint : process.env.JETSTEAM_ENDPOINT || ''
   })
   await server.start()
   console.log(
