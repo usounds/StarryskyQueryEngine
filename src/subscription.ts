@@ -38,7 +38,7 @@ export class ScpecificActorsSubscription {
 
   constructor(public db: Database) {
     this.agent = new BskyAgent({
-      service: 'https://bsky.social'
+      service: 'https://api.bsky.app'
     })
 
   }
@@ -122,17 +122,6 @@ export class ScpecificActorsSubscription {
   async reload() {
     dotenv.config()
 
-    //ログイン
-    if (!this.agent.hasSession) {
-      if (this.agent.session !== undefined) {
-        await this.agent.resumeSession(this.agent.session)
-      } else {
-        await this.agent.login({
-          identifier: process.env.FEEDGEN_PUBLISHER_IDENTIFIER || '',
-          password: process.env.FEEDGEN_APP_PASSWORD || ''
-        })
-      }
-    }
 
     //検索条件取得
     let conditionBuiler = this.db
