@@ -2,18 +2,19 @@
 # yarn lockfile v1
 
 
-"@atproto/api@^0.12.29":
-  version "0.12.29"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.12.29.tgz#95a19202c2f0eec4c955909685be11009ba9b9a1"
-  integrity sha512-PyzPLjGWR0qNOMrmj3Nt3N5NuuANSgOk/33Bu3j+rFjjPrHvk9CI6iQPU6zuDaDCoyOTRJRafw8X/aMQw+ilgw==
+"@atproto/api@^0.13.7":
+  version "0.13.7"
+  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.13.7.tgz#072eba2025d5251505f17b0b5d2de33749ea5ee4"
+  integrity sha512-41kSLmFWDbuPOenb52WRq1lnBkSZrL+X29tWcvEt6SZXK4xBoKAalw1MjF+oabhzff12iMtNaNvmmt2fu1L+cw==
   dependencies:
     "@atproto/common-web" "^0.3.0"
-    "@atproto/lexicon" "^0.4.0"
+    "@atproto/lexicon" "^0.4.1"
     "@atproto/syntax" "^0.3.0"
-    "@atproto/xrpc" "^0.5.0"
+    "@atproto/xrpc" "^0.6.2"
     await-lock "^2.2.2"
     multiformats "^9.9.0"
     tlds "^1.234.0"
+    zod "^3.23.8"
 
 "@atproto/common-web@^0.3.0":
   version "0.3.0"
@@ -66,6 +67,17 @@
     multiformats "^9.9.0"
     zod "^3.21.4"
 
+"@atproto/lexicon@^0.4.1":
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/@atproto/lexicon/-/lexicon-0.4.1.tgz#19155210570a2fafbcc7d4f655d9b813948e72a0"
+  integrity sha512-bzyr+/VHXLQWbumViX5L7h1NKQObfs8Z+XZJl43OUK8nYFUI4e/sW1IZKRNfw7Wvi5YVNK+J+yP3DWIBZhkCYA==
+  dependencies:
+    "@atproto/common-web" "^0.3.0"
+    "@atproto/syntax" "^0.3.0"
+    iso-datestring-validator "^2.2.2"
+    multiformats "^9.9.0"
+    zod "^3.23.8"
+
 "@atproto/repo@^0.4.1":
   version "0.4.1"
   resolved "https://registry.yarnpkg.com/@atproto/repo/-/repo-0.4.1.tgz#94fbbe1d5e10bf20f072938c43371af759b66cf0"
@@ -111,6 +123,14 @@
   dependencies:
     "@atproto/lexicon" "^0.4.0"
     zod "^3.21.4"
+
+"@atproto/xrpc@^0.6.2":
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/@atproto/xrpc/-/xrpc-0.6.2.tgz#634228a7e533de01bda2214837d11574fdadad55"
+  integrity sha512-as/gb08xJb02HAGNrSQSumCe10WnOAcnM6bR6KMatQyQJuEu7OY6ZDSTM/4HfjjoxsNqdvPmbYuoUab1bKTNlA==
+  dependencies:
+    "@atproto/lexicon" "^0.4.1"
+    zod "^3.23.8"
 
 "@cbor-extract/cbor-extract-darwin-arm64@2.1.1":
   version "2.1.1"

@@ -1,6 +1,6 @@
 {
-  "name": "feed-generator",
-  "version": "v0.1.4",
+  "name": "starrysky-query-engine",
+  "version": "v0.2.0",
   "description": "StarryskyQueryEngine",
   "main": "index.js",
   "repository": "git@github.com:usounds/StarryskyQueryEngine.git",
@@ -13,7 +13,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@atproto/api": "^0.12.29",
+    "@atproto/api": "^0.13.7",
     "@atproto/identity": "^0.4.0",
     "@atproto/lexicon": "^0.4.0",
     "@atproto/repo": "^0.4.1",

@@ -132,3 +132,4 @@ dist
 
 .env
 test*.json
+*.sqlite
