@@ -92,6 +92,9 @@ export class FeedGenerator {
               profileMatch: record.profileMatch,
               customLabelerDid: record.customLabelerDid,
               customLabelerLabelValues: record.customLabelerLabelValues,
+              inputType: record.inputType,
+              invetListUri: record.invetListUri,
+              enableExactMatch: record.enableExactMatch,
               recordCount: 0
             }
 
