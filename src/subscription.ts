@@ -214,7 +214,7 @@ export class ScpecificActorsSubscription {
 
             const check = await checkRecord(obj, record, post.author.did, userProfileStringsMap)
             if (!check) {
-              break
+              continue
             }
 
 /*
