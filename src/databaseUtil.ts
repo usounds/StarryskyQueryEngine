@@ -1,8 +1,9 @@
 import express from 'express'
 import { AppContext } from './config'
 import { appVersion } from "./subscription"
+import {WebSocketReceiver} from './jerstream'
 
-const makeRouter = (ctx: AppContext) => {
+const makeRouter = (ctx: AppContext, jetsrteam:WebSocketReceiver) => {
     const router = express.Router()
 
     //データ更新
@@ -113,7 +114,11 @@ const makeRouter = (ctx: AppContext) => {
                 .execute()
 
             console.log('Operation mode:updateQuery succeeded.')
+
+            //console.log(jetsrteam)
+            //jetsrteam.setupConnection()
             res.json({ result: 'OK', message: '更新に成功しました' })
+
         }
     })
 
@@ -139,17 +144,7 @@ const makeRouter = (ctx: AppContext) => {
                 return
             }
 
-            
-            let builder = ctx.db
-                .selectFrom('sub_state')
-                .selectAll()
-                .where('service', '=', 'jetstream');
-
-            const cursorRes = await builder.execute();
-
-            let time_us = ''
-
-            if(cursorRes[0].cursor ) time_us= cursorRes[0].cursor.toString()
+            let time_us = jetsrteam.currentTimeUs()
 
             let returnObj
             for (let obj of confitionRes) {

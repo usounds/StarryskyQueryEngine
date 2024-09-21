@@ -53,6 +53,7 @@ migrations['001'] = {
       .addColumn('embedExternalUrl', 'varchar')
       .addColumn('inputType', 'varchar')
       .addColumn('invetListUri', 'varchar')
+      .addColumn('enableExactMatch', 'varchar')
       .addColumn('recordCount', 'integer', (col) => col.notNull())
       .execute()
   },

@@ -47,4 +47,5 @@ export type Conditions = {
   embedExternalUrl: string | null
   inputType: string | null
   invetListUri: string | null
+  enableExactMatch: string | null
 }

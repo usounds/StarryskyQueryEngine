@@ -1,67 +1,86 @@
 import WebSocket from 'ws'
-import { PostView } from './lexicon/types/app/bsky/feed/defs'
 import { Database } from './db'
 import { record } from './subscription'
+
+import { Conditions, checkRecord, getConditions } from './util/conditionsCheck'
+
+type Label = {
+    $type: string;
+    values: { val: string }[];
+}
 
 const staticJetstreamParam: string = '/subscribe?wantedCollections=app.bsky.feed.post'
 
 export class WebSocketReceiver {
     private ws: WebSocket | null = null;
     private host: string;
-    private time_us: number
+    private time_us: number = 0
+    private previousTimeUs: number = 0; // 前回のtime_usを記録するための変数
     private reconnectInterval: number = 5000; // 再接続までの待機時間（ミリ秒
 
     constructor(url: string, public db: Database) {
-        this.initialize(url);
+        this.initialize();
         this.startIntervalTask()
     }
 
-    private async initialize(host: string) {
-        this.host = host
+    private initialize() {
+        this.host = 'wss://jetstream.atproto.tools'
 
-        //バックフィル用のカーソル復元
-        try {
-            let builder = this.db
-                .selectFrom('sub_state')
-                .selectAll()
-                .where('service', '=', 'jetstream');
-
-            const res = await builder.execute();
-
-            if (res[0].cursor) {
-                this.time_us = res[0].cursor;
-            }
-
-        } catch (e) {
-            const oneDayAgo = Date.now() - 2 * 60 * 60 * 1000; // 1日前のミリ秒
+        if (this.time_us === 0) {
+            const oneDayAgo = Date.now();
             const oneDayAgoUnix = Math.floor(oneDayAgo / 1000); // UNIX時間に変換（秒）
             this.time_us = oneDayAgoUnix;
-
         }
 
-        this.setupConnection()
+        const url = this.host + staticJetstreamParam + '&cursor=' + this.time_us
+        console.log('WebSocket try to connect to:' + url)
+
+        this.ws = new WebSocket(this.host + staticJetstreamParam + '&cursor=' + this.time_us);  // 新しい接続を作成
+
+        this.setupListeners();
     }
 
-    private setupConnection(): void {
+    /*
+    public async setupConnection(db: Database): Promise<void> {
         if (this.ws) {
             this.ws.close();
         }
 
-        const url = this.host + staticJetstreamParam + '&cursor=' + this.time_us
-        console.log('WebSocket try to connect to:'+url)
+        let conditions: Conditions[] = await getConditions(this.db);
+        let newConfitions: Conditions[] = []
 
-        this.ws = new WebSocket(this.host + staticJetstreamParam + '&cursor=' + this.time_us);  // 新しい接続を作成
-        this.setupListeners();  // リスナーをセットアップ
+        for (let condition of conditions)
+            if (condition.inputType === 'jetstream') {
+                newConfitions.push(condition)
+            }
+
+        if (newConfitions.length > 0) {
+            if (this.time_us === 0) {
+                const oneDayAgo = Date.now();
+                const oneDayAgoUnix = Math.floor(oneDayAgo / 1000); // UNIX時間に変換（秒）
+                this.time_us = oneDayAgoUnix;
+            }
+
+            const url = this.host + staticJetstreamParam + '&cursor=' + this.time_us
+            console.log('WebSocket try to connect to:' + url)
+
+            this.ws = new WebSocket(this.host + staticJetstreamParam + '&cursor=' + this.time_us);  // 新しい接続を作成
+            await this.setupListeners();  // リスナーをセットアップ
+        } else {
+            console.log('There is no condition for Jetstream')
+
+        }
     }
+        */
 
     // WebSocket のリスナーを設定
-    private setupListeners(): void {
+    private async setupListeners(): Promise<void> {
         if (!this.ws) return;  // WebSocket がない場合は処理を中断
         this.ws.on('open', () => {
             console.log('WebSocket connection established:' + this.host);
         });
 
-        this.ws.on('message', (data) => {
+        this.ws.on('message', async (data) => {
             try {
                 const event = JSON.parse(data.toString()); // 受信したデータをJSONとしてパース
 
@@ -86,8 +105,42 @@ export class WebSocketReceiver {
                 const type = event.commit.type
                 if (type === 'c') {
                     //console.log(this.formatTimestamp(event.time_us))
-                    //const post = event.commit.record as record
-                    //console.log(post.text)
+                    const post = event.commit.record as record
+                    let conditions: Conditions[] = await getConditions(this.db);
+
+                    let newConfitions: Conditions[] = []
+
+                    for (let condition of conditions)
+                        if (condition.inputType === 'jetstream') {
+                            newConfitions.push(condition)
+                        }
+
+                    for (const row of newConfitions) {
+                        if (await checkRecord(row, post, event.did, new Map<string, string>)) {
+
+                            //
+                            if (row.labelDisable === 'false' || (row.labelDisable === 'true' && !post.labels)) {
+
+                                console.log(event.commit)
+                                const postsToCreate = {
+                                    uri: 'at://' + event.did + '/app.bsky.feed.post/' + event.commit.rkey,
+                                    key: row.key,
+                                    cid: event.commit.cid,
+                                    indexedAt: post.createdAt,
+                                    inputType: 'jetstream'
+                                }
+
+                                console.log(postsToCreate)
+                                this.db
+                                    .insertInto('post')
+                                    .values(postsToCreate)
+                                    .onConflict(oc => oc.doNothing())
+                                    .execute()
+
+                                    
+                            }
+                        }
+                    }
 
                 } else if (type === 'd') {
                     //console.log(this.formatTimestamp(event.time_us))
@@ -112,13 +165,6 @@ export class WebSocketReceiver {
         });
     }
 
-    // URL を変更するメソッド
-    public changeUrl(newUrl: string): void {
-        console.log(`Changing WebSocket URL from ${this.host} to ${newUrl}`);
-        this.host = newUrl;  // URL を更新
-        this.setupConnection();  // 新しい URL で接続を再初期化
-    }
-
     private startIntervalTask() {
         setInterval(() => {
             this.executeTask(); // 1分ごとに実行するメソッド
@@ -126,16 +172,25 @@ export class WebSocketReceiver {
     }
 
     private async executeTask() {
-        console.log(`カーソル更新 at ${this.formatTimestamp(this.time_us)} `);
-
-        if(!this.time_us) return
-
+        console.log(`Websocket current time_us : ${this.formatTimestamp(this.time_us)} `);
+    
+        if (this.time_us === 0) return;
+    
+        // 現在の time_us が前回の値と同じ場合に this.initialize() を呼び出す
+        if (this.time_us === this.previousTimeUs) {
+            console.log('time_us has not changed. Reinitializing...');
+            await this.initialize(); // initialize を呼び出して再接続
+        }
+    
+        // 前回のtime_usを更新
+        this.previousTimeUs = this.time_us;
+    
         // バックフィル用のカーソル保存
         let obj = {
             service: 'jetstream',
             cursor: this.time_us,
-        }
-
+        };
+    
         await this.db
             .insertInto('sub_state')
             .values(obj)
@@ -144,14 +199,13 @@ export class WebSocketReceiver {
                 .doUpdateSet({ cursor: obj.cursor })
             )
             .execute();
-
     }
 
 
     private reconnect(): void {
         setTimeout(() => {
             console.log('Reconnecting to WebSocket...');
-            this.setupConnection(); // 再接続処理
+            this.initialize(); // 再接続処理
         }, this.reconnectInterval); // 再接続までの待機時間
     }
 
@@ -185,6 +239,12 @@ export class WebSocketReceiver {
                 : `${diffSeconds}秒前`;
 
         return `${formattedDate} (${diffFormatted})`;
+    }
+
+    public currentTimeUs():string{
+
+        return this.time_us.toString()
+
     }
 
 }

@@ -3,8 +3,11 @@ import { AtpAgent } from '@atproto/api'
 import { QueryParams as QueryParamsSearch } from './lexicon/types/app/bsky/feed/searchPosts'
 import { Database } from './db'
 import { PostView } from './lexicon/types/app/bsky/feed/defs'
-import fetch from 'node-fetch'
 import * as pkg from "../package.json"
+
+import { Conditions,checkRecord,getConditions } from './util/conditionsCheck'
+
+let conditions: Conditions[]
 
 export function appVersion(): string {
   return pkg.version;
@@ -20,10 +23,12 @@ export type record = {
     external?: {
       uri?: string
     }
+  },
+  labels:{
   }
 }
 
-type imageObject = {
+export type imageObject = {
   alt: string
   aspectRatio: {
     height: number
@@ -35,6 +40,8 @@ type imageObject = {
 
 export class ScpecificActorsSubscription {
   agent: AtpAgent
+
+  private isReloading: boolean = false;
 
   constructor(public db: Database) {
     this.agent = new AtpAgent({
@@ -51,16 +58,19 @@ export class ScpecificActorsSubscription {
   async reload() {
     dotenv.config()
 
+    if (this.isReloading) {
+      console.log('処理中のため、次の実行をスキップします。');
+      return; // 前の処理が終わっていないのでスキップ
+    }
+
+    this.isReloading = true
 
     //検索条件取得
-    let conditionBuiler = this.db
-      .selectFrom('conditions')
-      .selectAll()
-    const confitionRes = await conditionBuiler.execute()
+    conditions = await getConditions(this.db)
 
-    if (confitionRes.length === 0) console.log('Query Engineには検索条件は登録されていません。Admin Consoleから登録してください。There is no conditions.')
+    if (conditions.length === 0) console.log('Query Engineには検索条件は登録されていません。Admin Consoleから登録してください。There is no conditions.')
 
-    for (let obj of confitionRes) {
+    for (let obj of conditions) {
 
       try {
         if (obj.refresh !== 0) {
@@ -96,6 +106,7 @@ export class ScpecificActorsSubscription {
           .selectFrom('post')
           .selectAll()
           .where('key', '=', obj.key)
+          .where('inputType', '=', 'query')
           .orderBy('indexedAt', 'desc')
         const res = await builder.execute()
         const storedPost = res.map((subsc) => subsc.uri)
@@ -112,33 +123,18 @@ export class ScpecificActorsSubscription {
         }
 
         const query = obj.query
-        const inputRegexText = obj.inputRegex
-        const invertRegexText = obj.invertRegex || ''
-        const label = obj.labelDisable    //センシティブラベル付き投稿表示制御用フラグ
-        const reply = obj.replyDisable    //リプライ表示抑制用フラグ
-        const alt = obj.includeAltText    //画像のALT文字列検索可否フラグ
-        const image = obj.imageOnly       //画像のみ抽出フラグ
         const lang = obj.lang //言語フィルタ用配列
         const initCount = obj.initPost || 100  //初期起動時の読み込み件数
         const profileMatch = obj.profileMatch || ''  //プロフィールマッチ
         const customLabelerDid = obj.customLabelerDid //カスタムラベラー
         const customLabelerLabelValues = obj.customLabelerLabelValues //カスタムラベラーのラベル値
-        const embedExternalUrl = obj.embedExternalUrl || 'false'
-
-        const inputRegex = new RegExp(inputRegexText, 'ig')  //抽出正規表現
-        const invertRegex = new RegExp(invertRegexText, 'i') //除外用正規表現
+        const label = obj.labelDisable //カスタムラベラーのラベル値
 
         let recordcount = 0;
         let posts: PostView[] = []
         let cursor = 0
         let apiCall = 0
         const startTime = Date.now(); // 開始時間
-
-        if (process.env.DEBUG_MODE) {
-          console.log('query:' + query)
-          console.log('inputRegexText:' + inputRegexText)
-          console.log('invertRegexText:' + invertRegexText)
-        }
 
         //言語フィルタ
         let searchQuery = query
@@ -160,14 +156,14 @@ export class ScpecificActorsSubscription {
         //初回起動モードは既定の件数まで処理を継続
         //差分起動モードは前回の実行に追いつくまで処理を継続
         //ただし、API検索が100回に到達する、または、APIの検索が終了した場合は処理を止める
-        while (((!init && !catchUp) || (init && recordcount < initCount)) && cursor % 100 == 0 && apiCall < 100) {
+        while (((!init && !catchUp && obj.inputType!=='jetstream') || (init && recordcount < initCount)) && cursor % 100 == 0 && apiCall < 10) {
           //検索API実行
           const params_search: QueryParamsSearch = {
             q: searchQuery,
             limit: 100,
             cursor: String(cursor)
           }
-          const seachResults = await this.agent.api.app.bsky.feed.searchPosts(params_search)
+          const seachResults = await this.agent.app.bsky.feed.searchPosts(params_search)
           apiCall++
 
           //念のため検索件数をログだし
@@ -207,13 +203,21 @@ export class ScpecificActorsSubscription {
           for (let post of seachResults.data.posts) {
 
             //前回実行分に追いついた
-            if (storedPost.includes(post.uri)) {
+            if (storedPost.includes(post.uri) && !init) {
               console.log('Catch up finished. URI:' + post.uri)
               catchUp = true
               break
             }
 
+
             const record = post.record as record
+
+            const check = await checkRecord(obj, record, post.author.did, userProfileStringsMap)
+            if (!check) {
+              break
+            }
+
+/*
             let text = record.text || ''
 
             // 検索APIがALT TEXTの検索ができないので削除
@@ -246,7 +250,7 @@ export class ScpecificActorsSubscription {
             } else if (image === 'textOnly' && imageObject !== undefined && imageObject.length > 0) {
               continue
             }
-
+*/
             //ラベルの仕分け
             let officialLabels: string[] = []
             let customLabels: string[] = []
@@ -287,6 +291,9 @@ export class ScpecificActorsSubscription {
 
             if (skip) continue
 
+
+            /*
+
             //リプライ無効の場合は、リプライを除外
             if (reply === "true" && record.reply !== undefined) {
               continue
@@ -325,6 +332,9 @@ export class ScpecificActorsSubscription {
 
             if (skip) continue
 
+
+    */
+
             //投稿をDBに保存
             recordcount++
 
@@ -333,7 +343,8 @@ export class ScpecificActorsSubscription {
               key: obj.key,
               cid: post.cid,
               // indexedAt: new Date().toISOString(),
-              indexedAt: record.createdAt
+              indexedAt: record.createdAt,
+              inputType: 'query'
             }
             await this.db
               .insertInto('post')
@@ -351,9 +362,17 @@ export class ScpecificActorsSubscription {
           recordCount: recordcount + res.length
         }
 
+        const res3 = await this.db
+          .selectFrom('post')
+          .selectAll()
+          .where('key', '=', obj.key)
+          .orderBy('indexedAt', 'desc')
+          .execute()
 
-        if (updateObj.recordCount > obj.limitCount) {
-          const deletePost = updateObj.recordCount - obj.limitCount
+        console.log('count : '+res3.length)
+
+        if (res3.length > obj.limitCount) {
+          const deletePost = res3.length - obj.limitCount
 
           console.log('Limit:[' + obj.limitCount + '] delete post counts:' + deletePost)
 
@@ -368,18 +387,18 @@ export class ScpecificActorsSubscription {
 
         }
 
-
         this.db
           .updateTable('conditions')
           .set(updateObj)
           .where('key', '=', obj.key)
           .execute()
 
-
       } catch (e) {
         console.error(e)
       }
     }
+    this.isReloading = false
+
   }
 
   intervalId = setInterval(async () => {
@@ -387,6 +406,6 @@ export class ScpecificActorsSubscription {
   }, Number(process.env.FEEDGEN_CRON_INTERVAL || 10) * 60 * 1000) // 10m
 }
 
-function getIsDuplicate(arr1, arr2) {
+export function getIsDuplicate(arr1, arr2) {
   return [...arr1, ...arr2].filter(item => arr1.includes(item) && arr2.includes(item)).length > 0
 }

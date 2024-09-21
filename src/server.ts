@@ -137,9 +137,9 @@ export class FeedGenerator {
       cfg,
     }
 
-    if(cfg.jetstreamEndpoint){
-        const jetstream = new WebSocketReceiver(cfg.jetstreamEndpoint,db)
-    }
+
+    let jetstream
+    jetstream = new WebSocketReceiver('wss://jetstream.atproto.tools',db)
 
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
@@ -148,13 +148,13 @@ export class FeedGenerator {
     describeGenerator(server, ctx)
     app.use(server.xrpc.router)
     app.use(wellKnown(ctx))
-    app.use(databaseUtil(ctx))
+    app.use(databaseUtil(ctx,jetstream))
 
     return new FeedGenerator(app, db, actorsfeed, cfg)
   }
 
   async start(): Promise<http.Server> {
-    await migrateToLatest(this.db)
+   // await migrateToLatest(this.db)
     this.actorsfeed.run()
     this.server = this.app.listen(this.cfg.port, this.cfg.listenhost)
     await events.once(this.server, 'listening')
