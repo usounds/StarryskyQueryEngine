@@ -40,7 +40,7 @@ export class FeedGenerator {
 
   static async create(cfg: Config): Promise<FeedGenerator> {
     const app = express()
-    const db = createDb(cfg.sqliteLocation)
+    const db = await createDb(cfg.sqliteLocation)
 
     //Admin Console経由でD1に保存された検索条件を取得
     const adminConsoleEndpoint = process.env.STARRYSKY_ADMIN_CONSOLE || 'https://starrysky-console.pages.dev'
