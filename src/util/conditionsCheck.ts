@@ -64,7 +64,7 @@ export async function getConditions(db: Database): Promise<Conditions[]> {
         customLabelerLabelValues: row.customLabelerLabelValues || '',
         embedExternalUrl: row.embedExternalUrl || 'false',
         enableExactMatch: row.enableExactMatch || 'false',
-        inputType: row.inputType || '',
+        inputType: row.inputType || 'query',
         listUri: row.listUri || '',
         invetListUri: row.invetListUri || '',
     }))
@@ -90,7 +90,7 @@ export async function checkRecord(condition: Conditions, record: record, did: st
 
     if (condition.lang && record.langs) {
         let langs: string[] = [condition.lang]
-        if (getIsDuplicate(langs, record.langs)) {
+        if (!getIsDuplicate(langs, record.langs)) {
             return false
 
         }
