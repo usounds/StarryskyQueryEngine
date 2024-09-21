@@ -103,6 +103,8 @@ const makeRouter = (ctx: AppContext) => {
                 customLabelerDid: req.body.customLabelerDid,
                 customLabelerLabelValues: req.body.customLabelerLabelValues,
                 embedExternalUrl:req.body.embedExternalUrl,
+                inputType: req.body.inputType,
+                invetListUri:req.body.invetListUri,
             }
 
             ctx.db
@@ -137,6 +139,18 @@ const makeRouter = (ctx: AppContext) => {
                 return
             }
 
+            
+            let builder = ctx.db
+                .selectFrom('sub_state')
+                .selectAll()
+                .where('service', '=', 'jetstream');
+
+            const cursorRes = await builder.execute();
+
+            let time_us = ''
+
+            if(cursorRes[0].cursor ) time_us= cursorRes[0].cursor.toString()
+
             let returnObj
             for (let obj of confitionRes) {
                 returnObj = {
@@ -165,7 +179,10 @@ const makeRouter = (ctx: AppContext) => {
                     customLabelerDid: obj.customLabelerDid,
                     customLabelerLabelValues: obj.customLabelerLabelValues,
                     embedExternalUrl:obj.embedExternalUrl,
-                    queryEngineVersion: appVersion()
+                    inputType: obj.inputType,
+                    invetListUri:obj.invetListUri,
+                    queryEngineVersion: appVersion(),
+                    timeUs:time_us
                 }
             }
             res.json(returnObj)

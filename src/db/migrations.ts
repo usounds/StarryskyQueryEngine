@@ -17,6 +17,7 @@ migrations['001'] = {
       .addColumn('cid', 'varchar', (col) => col.notNull())
       .addColumn('replyParent', 'varchar')
       .addColumn('replyRoot', 'varchar')
+      .addColumn('inputType', 'varchar')
       .addColumn('indexedAt', 'varchar', (col) => col.notNull())
       .addPrimaryKeyConstraint('pk1',['uri','key'])
       .execute()
@@ -50,6 +51,8 @@ migrations['001'] = {
       .addColumn('customLabelerDid', 'varchar')
       .addColumn('customLabelerLabelValues', 'varchar')
       .addColumn('embedExternalUrl', 'varchar')
+      .addColumn('inputType', 'varchar')
+      .addColumn('invetListUri', 'varchar')
       .addColumn('recordCount', 'integer', (col) => col.notNull())
       .execute()
   },

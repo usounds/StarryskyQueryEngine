@@ -11,6 +11,7 @@ export type Post = {
   replyParent: string | null
   replyRoot: string | null
   indexedAt: string
+  inputType: string | null
 }
 
 export type SubState = {
@@ -44,4 +45,6 @@ export type Conditions = {
   customLabelerDid: string | null
   customLabelerLabelValues: string | null
   embedExternalUrl: string | null
+  inputType: string | null
+  invetListUri: string | null
 }

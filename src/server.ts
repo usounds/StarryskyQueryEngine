@@ -11,6 +11,13 @@ import { AppContext, Config } from './config'
 import wellKnown from './well-known'
 import databaseUtil from './databaseUtil'
 import {WebSocketReceiver} from './jerstream'
+import fetch from 'node-fetch'
+import * as pkg from "../package.json"
+
+export function appVersion(): string {
+  return pkg.version;
+}
+
 
 export class FeedGenerator {
   public app: express.Application
@@ -31,9 +38,81 @@ export class FeedGenerator {
     this.cfg = cfg
   }
 
-  static create(cfg: Config) {
+  static async create(cfg: Config): Promise<FeedGenerator> {
     const app = express()
     const db = createDb(cfg.sqliteLocation)
+
+    //Admin Console経由でD1に保存された検索条件を取得
+    const adminConsoleEndpoint = process.env.STARRYSKY_ADMIN_CONSOLE || 'https://starrysky-console.pages.dev'
+    let serverUrl
+    if (process.env.FEEDGEN_HOSTNAME === 'example.com') {
+      serverUrl = 'http://localhost:' + process.env.FEEDGEN_PORT
+    } else {
+      serverUrl = 'https://' + process.env.FEEDGEN_HOSTNAME
+    }
+
+    console.log('Starrysky Query Engine:' + appVersion())
+    console.log('Query Engine URL is ' + serverUrl)
+    console.log('Admin Console URL is ' + adminConsoleEndpoint)
+
+    if (process.env.FEEDGEN_HOSTNAME !== 'example.com') {
+      try {
+        const result = await fetch(adminConsoleEndpoint + "/api/getD1Query",
+          {
+            method: 'post', headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ serverUrl: serverUrl })
+          }
+        );
+
+        const resultObject = await result.json()
+
+        if (resultObject.result === 'OK') {
+          for (let record of resultObject.resultRecord) {
+            let obj = {
+              key: record.key || '',
+              recordName: record.recordName || '',
+              query: record.query || '',
+              inputRegex: record.inputRegex || '',
+              invertRegex: record.invertRegex,
+              refresh: record.refresh || 0,
+              lang: record.lang,
+              labelDisable: record.labelDisable,
+              replyDisable: record.replyDisable,
+              imageOnly: record.imageOnly,
+              initPost: record.initPost || 100,
+              pinnedPost: record.pinnedPost,
+              limitCount: record.limitCount || 2000,
+              feedAvatar: record.feedAvatar,
+              feedName: record.feedName,
+              feedDescription: record.feedDescription,
+              includeAltText: record.includeAltText,
+              profileMatch: record.profileMatch,
+              customLabelerDid: record.customLabelerDid,
+              customLabelerLabelValues: record.customLabelerLabelValues,
+              recordCount: 0
+            }
+
+            await db
+              .insertInto('conditions')
+              .values(obj)
+              .onConflict(oc => oc.doNothing())
+              .execute()
+
+            console.log('Admin Consoleから検索条件を復元しました：' + record.key)
+
+
+          }
+        }
+      } catch (e) {
+        console.error('Admin Consoleへ接続できず、検索条件は復元できませんでした。' + e)
+      }
+    } else {
+      console.log('example.comが指定されているので、検索条件は復元しませんでした')
+
+    }
+
     // const firehose = new FirehoseSubscription(db, cfg.subscriptionEndpoint)
     const actorsfeed = new ScpecificActorsSubscription(db)
 
@@ -58,7 +137,7 @@ export class FeedGenerator {
     }
 
     if(cfg.jetstreamEndpoint){
-        const jetstream = new WebSocketReceiver(cfg.jetstreamEndpoint+'/subscribe?wantedCollections=app.bsky.feed.post')
+        const jetstream = new WebSocketReceiver(cfg.jetstreamEndpoint,db)
     }
 
     app.use(express.json());
