@@ -156,7 +156,7 @@ export class ScpecificActorsSubscription {
         //初回起動モードは既定の件数まで処理を継続
         //差分起動モードは前回の実行に追いつくまで処理を継続
         //ただし、API検索が100回に到達する、または、APIの検索が終了した場合は処理を止める
-        while (((!init && !catchUp && obj.inputType!=='jetstream') || (init && recordcount < initCount)) && cursor % 100 == 0 && apiCall < 10) {
+        while (((!init && !catchUp && obj.inputType!=='jetstream') || (init && recordcount < initCount)) && cursor % 100 == 0 && apiCall < 100) {
           //検索API実行
           const params_search: QueryParamsSearch = {
             q: searchQuery,
