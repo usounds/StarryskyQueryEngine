@@ -155,7 +155,7 @@ export class ScpecificActorsSubscription {
 
         }
 
-        this.agent.configureLabelersHeader(labelerDid)
+        this.agent.configureLabelers(labelerDid)
 
         //初回起動モードは既定の件数まで処理を継続
         //差分起動モードは前回の実行に追いつくまで処理を継続
