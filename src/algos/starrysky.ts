@@ -22,6 +22,12 @@ export const handler = async (ctx: AppContext, params: QueryParams, rkey: string
   const feed: { post: string }[] = [];
   let cursor: string | undefined
 
+  const requesterDid = await validateAuth(
+    req,
+    ctx.cfg.serviceDid,
+    ctx.didResolver)
+
+
   //プライベートフィード
   if(recordNameHandler[0].privateFeed!== null && recordNameHandler[0].privateFeed!== undefined && recordNameHandler[0].privateFeed!== '' ){
     const requesterDid = await validateAuth(
