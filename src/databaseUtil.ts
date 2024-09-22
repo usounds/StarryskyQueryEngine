@@ -1,9 +1,9 @@
 import express from 'express'
 import { AppContext } from './config'
 import { appVersion } from "./subscription"
-import {WebSocketReceiver} from './jerstream'
+import { WebSocketReceiver } from './jerstream'
 
-const makeRouter = (ctx: AppContext, jetsrteam:WebSocketReceiver) => {
+const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
     const router = express.Router()
 
     //データ更新
@@ -103,10 +103,10 @@ const makeRouter = (ctx: AppContext, jetsrteam:WebSocketReceiver) => {
                 profileMatch: req.body.profileMatch,
                 customLabelerDid: req.body.customLabelerDid,
                 customLabelerLabelValues: req.body.customLabelerLabelValues,
-                embedExternalUrl:req.body.embedExternalUrl,
+                embedExternalUrl: req.body.embedExternalUrl,
                 inputType: req.body.inputType,
-                invetListUri:req.body.invetListUri,
-                enableExactMatch:req.body.enableExactMatch
+                invetListUri: req.body.invetListUri,
+                enableExactMatch: req.body.enableExactMatch
             }
 
             ctx.db
@@ -174,12 +174,12 @@ const makeRouter = (ctx: AppContext, jetsrteam:WebSocketReceiver) => {
                     profileMatch: obj.profileMatch,
                     customLabelerDid: obj.customLabelerDid,
                     customLabelerLabelValues: obj.customLabelerLabelValues,
-                    embedExternalUrl:obj.embedExternalUrl,
+                    embedExternalUrl: obj.embedExternalUrl,
                     inputType: obj.inputType,
-                    invetListUri:obj.invetListUri,
-                    enableExactMatch:obj.enableExactMatch,
+                    invetListUri: obj.invetListUri,
+                    enableExactMatch: obj.enableExactMatch,
                     queryEngineVersion: appVersion(),
-                    timeUs:time_us
+                    timeUs: time_us
                 }
             }
             res.json(returnObj)
@@ -194,17 +194,92 @@ const makeRouter = (ctx: AppContext, jetsrteam:WebSocketReceiver) => {
         if (process.env.EDIT_WEB_PASSKEY !== undefined && requestWebPasskey !== process.env.EDIT_WEB_PASSKEY) {
             res.sendStatus(401)
         } else {
-            ctx.db
-                .deleteFrom('conditions')
-                .where('key', '=', req.body.key)
-                .execute()
+            try {
+                ctx.db
+                    .deleteFrom('conditions')
+                    .where('key', '=', req.body.key)
+                    .execute()
 
+                ctx.db
+                    .deleteFrom('post')
+                    .where('key', '=', req.body.key)
+                    .execute()
+            } catch (e) {
+                res.status(500).json({ result: 'ERROR', message: 'なんらかのエラーが発生しました' + e })
+                return
+            }
+        }
+
+        const returnObj = {
+            result: "OK",
+        }
+        res.json(returnObj)
+    })
+
+
+    //投稿削除
+    router.post('/deletePost', async (req: express.Request, res) => {
+        console.log('Operation mode:deletePost:key[' + req.body.key + '] AT-Url[' + req.body.aturi + ']')
+        const requestWebPasskey = req.headers['x-starrtsky-webpasskey']
+
+        if (process.env.EDIT_WEB_PASSKEY !== undefined && requestWebPasskey !== process.env.EDIT_WEB_PASSKEY) {
+            res.sendStatus(401)
+        } else {
+
+            try{
             ctx.db
                 .deleteFrom('post')
                 .where('key', '=', req.body.key)
+                .where('uri', '=', req.body.aturi)
                 .execute()
+            }catch(e){
+                res.status(500).json({ result: 'ERROR', message: 'なんらかのエラーが発生しました' + e })
+                return
+
+            }
+
         }
 
+        const returnObj = {
+            result: "OK",
+        }
+        res.json(returnObj)
+    })
+
+
+
+    //投稿
+    router.post('/putPost', async (req: express.Request, res) => {
+        console.log('Operation mode:deletePost:key[' + req.body.key + '] AT-Url[' + req.body.aturi + ']')
+        const requestWebPasskey = req.headers['x-starrtsky-webpasskey']
+
+        if (process.env.EDIT_WEB_PASSKEY !== undefined && requestWebPasskey !== process.env.EDIT_WEB_PASSKEY) {
+            res.sendStatus(401)
+        } else {
+
+
+            console.log(req.body)
+            try{
+            const postsToCreate = {
+                uri: req.body.aturi,
+                key: req.body.key,
+                cid: req.body.cid,
+                indexedAt: req.body.key.createdAt,
+                inputType: 'manual'
+            }
+
+            console.log(postsToCreate)
+            ctx.db
+                .insertInto('post')
+                .values(postsToCreate)
+                .onConflict(oc => oc.doNothing())
+                .execute()
+        }catch(e){
+            res.status(500).json({ result: 'ERROR', message: 'なんらかのエラーが発生しました' + e })
+            return
+        }
+
+        }
         const returnObj = {
             result: "OK",
         }
