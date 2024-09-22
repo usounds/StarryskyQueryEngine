@@ -142,7 +142,9 @@ export class FeedGenerator {
 
 
     let jetstream
-    jetstream = new WebSocketReceiver('wss://jetstream.atproto.tools',db)
+    if(process.env.JETSTEAM_ENDPOINT){
+      jetstream = new WebSocketReceiver(process.env.JETSTEAM_ENDPOINT,db)
+    }
 
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
