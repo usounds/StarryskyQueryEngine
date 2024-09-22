@@ -142,8 +142,8 @@ export class FeedGenerator {
 
 
     let jetstream
-    if(process.env.JETSTEAM_ENDPOINT){
-      jetstream = new WebSocketReceiver(process.env.JETSTEAM_ENDPOINT,db)
+    if(cfg.jetstreamEndpoint){
+      jetstream = new WebSocketReceiver(cfg.jetstreamEndpoint,db)
     }
 
     app.use(express.json());
