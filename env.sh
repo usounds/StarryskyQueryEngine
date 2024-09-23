@@ -6,8 +6,6 @@ sudo apt upgrade -y
 
 # NVMをインストール
 echo "-----nodeのバージョンアップ-----"
-sudo apt update
-sudo apt upgrade -y
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
@@ -63,5 +61,7 @@ echo "-----ライブラリをインストール中です----"
 npm install
 npm install -g ts-node
 
+echo ""
+echo "-----システムサービスに登録中です----"
 cp starrysky.service /etc/systemd/system/
 sudo systemctl start starrysky.service
