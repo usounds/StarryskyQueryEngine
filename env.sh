@@ -1,25 +1,26 @@
 #!/bin/bash
 
-echo "-----OSのライブラリバージョンアップ-----"
+echo "-----Step 1:OSのライブラリバージョンアップ-----"
 sudo apt update
 sudo apt upgrade -y
 
 # NVMをインストール
-echo "-----nodeのバージョンアップ-----"
+echo ""
+echo "-----Step 2:nodeのバージョンアップ-----"
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
 echo ""
-echo "-----makeのインストール----"
+echo "-----Step 3:makeのインストール----"
 sudo apt install -y build-essential
 
 
 echo ""
-echo "-----Starryskyのインストール----"
-
+echo "-----Step 4:Starryskyのインストール----"
 cd /opt
 git clone -b preview https://github.com/usounds/StarryskyQueryEngine.git
 cd StarryskyQueryEngine
+mkdir -p /opt/StarryskyQueryEngineDatabase/
 
 # 作成するファイルのパス
 output_file=".env"
@@ -36,13 +37,7 @@ echo "FEEDGEN_PUBLISHER_IDENTIFIER='$FEEDGEN_PUBLISHER_IDENTIFIER'" >> $output_f
 read -p "クリーンアップジョブを行う間隔(分)を入力してください。Jetstreamを使う場合は1が推奨されます: " FEEDGEN_CRON_INTERVAL
 echo "FEEDGEN_CRON_INTERVAL='$FEEDGEN_CRON_INTERVAL'" >> $output_file
 
-read -p "動作させるLinodeのIPアドレスを入力してください: " FEEDGEN_HOSTNAME
-
-# IPアドレスをハイフンで区切る形式に変換
-CONVERTED_HOSTNAME=$(echo "$FEEDGEN_HOSTNAME" | tr '.' '-').ip.linodeusercontent.com
-
-# 変換後のホスト名をファイルに書き出す
-echo "FEEDGEN_HOSTNAME='$CONVERTED_HOSTNAME'" >> $output_file
+read -p "動作させるLinodeのドメインだけを入力してください: " FEEDGEN_HOSTNAME
 
 echo "変換されたホスト名は $CONVERTED_HOSTNAME です"
 
@@ -57,11 +52,11 @@ echo "FEEDGEN_PORT='3000'" >> $output_file
 echo "設定ファイル $output_file が作成されました。"
 
 echo ""
-echo "-----ライブラリをインストール中です----"
+echo "-----Step 5:ライブラリをインストール中です----"
 npm install
 npm install -g ts-node
 
 echo ""
-echo "-----システムサービスに登録中です----"
+echo "-----Step 6:システムサービスに登録中です----"
 cp starrysky.service /etc/systemd/system/
 sudo systemctl start starrysky.service
