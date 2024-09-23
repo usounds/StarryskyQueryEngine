@@ -145,7 +145,10 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
                 return
             }
 
-            let time_us = jetsrteam.currentTimeUs()
+            let time_us = '0'
+            if(jetsrteam){
+                time_us = jetsrteam.currentTimeUs()
+            }
 
             let returnObj
             for (let obj of confitionRes) {
@@ -219,7 +222,7 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
 
     //投稿削除
     router.post('/deletePost', async (req: express.Request, res) => {
-        console.log('Operation mode:deletePost:key[' + req.body.key + '] AT-Url[' + req.body.aturi + ']')
+        console.log('Operation mode:deletePost:key[' + req.body.key + '] AT-Uri[' + req.body.aturi + ']')
         const requestWebPasskey = req.headers['x-starrtsky-webpasskey']
 
         if (process.env.EDIT_WEB_PASSKEY !== undefined && requestWebPasskey !== process.env.EDIT_WEB_PASSKEY) {
