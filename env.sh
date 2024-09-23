@@ -17,17 +17,25 @@ sudo apt install -y nginx
 sudo systemctl start nginx
 sudo systemctl enable nginx
 
-sudo tee /etc/nginx/conf.d/$DOMAIN.conf > /dev/null <<EOF
+sudo tee /etc/nginx/sites-available/$DOMAIN > /dev/null <<EOF
 server {
-    listen 80;
-    server_name $DOMAIN www.$DOMAIN;
-
-    root /usr/share/nginx/html;
-    index index.html;
+    server_name    $DOMAIN www.$DOMAIN;
 
     location / {
-        try_files \$uri \$uri/ =404;
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
     }
+
+
+}
+
+server {
+    server_name     $DOMAIN www.$DOMAIN;
+    listen 80;
 }
 EOF
 
