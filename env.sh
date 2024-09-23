@@ -1,22 +1,22 @@
 #!/bin/bash
 
-echo "-----Step 1:OSのライブラリバージョンアップ-----"
+echo "-----Step 1:OSのライブラリをバージョンアップしています-----"
 sudo apt update
 sudo apt upgrade -y
 
 # NVMをインストール
 echo ""
-echo "-----Step 2:nodeのバージョンアップ-----"
+echo "-----Step 2:nodeをバージョンアップしています-----"
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
 echo ""
-echo "-----Step 3:makeのインストール----"
+echo "-----Step 3:makeのインストール中です----"
 sudo apt install -y build-essential
 
 
 echo ""
-echo "-----Step 4:Starryskyのインストール----"
+echo "-----Step 4:Starryskyのインストール中です----"
 cd /opt
 git clone -b preview https://github.com/usounds/StarryskyQueryEngine.git
 cd StarryskyQueryEngine
@@ -29,6 +29,9 @@ output_file=".env"
 > $output_file
 
 # 対話型で環境変数の値を入力
+
+echo ""
+echo "ここからは対話式でセットアップします"
 echo ""
 
 read -p "管理をするBlueskyのハンドルを入力してください: " FEEDGEN_PUBLISHER_IDENTIFIER
@@ -37,7 +40,7 @@ echo "FEEDGEN_PUBLISHER_IDENTIFIER='$FEEDGEN_PUBLISHER_IDENTIFIER'" >> $output_f
 read -p "クリーンアップジョブを行う間隔(分)を入力してください。Jetstreamを使う場合は1が推奨されます: " FEEDGEN_CRON_INTERVAL
 echo "FEEDGEN_CRON_INTERVAL='$FEEDGEN_CRON_INTERVAL'" >> $output_file
 
-read -p "動作させるLinodeのIPアドレスを入力してください: " FEEDGEN_HOSTNAME
+read -p "動作させるLinodeのドメイン「だけ」をを入力してください: " FEEDGEN_HOSTNAME
 echo "FEEDGEN_HOSTNAME='$FEEDGEN_HOSTNAME'" >> $output_file
 
 read -p "Starrysky Consoleからログインするときに使うWeb Pass Keywordを入力してください: " EDIT_WEB_PASSKEY
@@ -59,3 +62,10 @@ echo ""
 echo "-----Step 6:システムサービスに登録中です----"
 cp starrysky.service /etc/systemd/system/
 sudo systemctl start starrysky.service
+
+echo ""
+echo "-----Step 7:デフォルトのプロセスを削除します----"
+pm2 delete hello
+
+echo ""
+echo "-----設定は以上です。お疲れ様でした----"
