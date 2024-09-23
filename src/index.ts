@@ -1,8 +1,9 @@
 import dotenv from 'dotenv'
 import FeedGenerator from './server'
 import { AtpAgent } from '@atproto/api'
-import { Headers } from 'node-fetch';
+import { Headers,Response } from 'node-fetch';
 global.Headers = Headers;
+global.Response = Response;
 
 const run = async () => {
   dotenv.config()
