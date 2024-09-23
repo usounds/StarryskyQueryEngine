@@ -67,11 +67,7 @@ echo ""
 read -p "管理をするBlueskyのハンドルを入力してください: " FEEDGEN_PUBLISHER_IDENTIFIER
 echo "FEEDGEN_PUBLISHER_IDENTIFIER='$FEEDGEN_PUBLISHER_IDENTIFIER'" >> $output_file
 
-read -p "クリーンアップジョブを行う間隔(分)を入力してください。Jetstreamを使う場合は1が推奨されます: " FEEDGEN_CRON_INTERVAL
-echo "FEEDGEN_CRON_INTERVAL='$FEEDGEN_CRON_INTERVAL'" >> $output_file
-
-read -p "動作させるLinodeのドメイン「だけ」をを入力してください: " FEEDGEN_HOSTNAME
-echo "FEEDGEN_HOSTNAME='$FEEDGEN_HOSTNAME'" >> $output_file
+echo "FEEDGEN_HOSTNAME='$DOMAIN'" >> $output_file
 
 read -p "Starrysky Consoleからログインするときに使うWeb Pass Keywordを入力してください: " EDIT_WEB_PASSKEY
 echo "EDIT_WEB_PASSKEY='$EDIT_WEB_PASSKEY'" >> $output_file
@@ -79,6 +75,7 @@ echo "EDIT_WEB_PASSKEY='$EDIT_WEB_PASSKEY'" >> $output_file
 echo "JETSTEAM_ENDPOINT='wss://jetstream.atproto.tools'" >> $output_file
 echo "FEEDGEN_SQLITE_LOCATION='/opt/StarryskyQueryEngineDatabase/db.sqlite'" >> $output_file
 echo "FEEDGEN_PORT='3000'" >> $output_file
+echo "FEEDGEN_CRON_INTERVAL='1'" >> $output_file
 
 # 実行完了メッセージ
 echo "設定ファイル $output_file が作成されました。"
