@@ -1,9 +1,18 @@
 #!/bin/bash
 
+# NVMをインストール
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
-source ~/.bashrc
+
+# nvmを使用するために必要な環境変数を設定
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # この行でnvmを読み込む
+
+# Node.jsのインストール
 nvm install 20.11.0 
 nvm use 20.11.0 
+
+sudo apt update
+sudo apt install build-essential
 
 cd /opt
 git clone -b preview https://github.com/usounds/StarryskyQueryEngine.git
