@@ -1,18 +1,23 @@
 #!/bin/bash
 
-# NVMをインストール
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
-
-# nvmを使用するために必要な環境変数を設定
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # この行でnvmを読み込む
-
-# Node.jsのインストール
-nvm install 20.11.0 
-nvm use 20.11.0 
-
+echo "-----OSのライブラリバージョンアップ-----"
 sudo apt update
-sudo apt install build-essential
+sudo apt upgrade -y
+
+# NVMをインストール
+echo "-----nodeのバージョンアップ-----"
+sudo apt update
+sudo apt upgrade -y
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+echo ""
+echo "-----makeのインストール----"
+sudo apt install -y build-essential
+
+
+echo ""
+echo "-----Starryskyのインストール----"
 
 cd /opt
 git clone -b preview https://github.com/usounds/StarryskyQueryEngine.git
@@ -25,6 +30,7 @@ output_file=".env"
 > $output_file
 
 # 対話型で環境変数の値を入力
+echo ""
 
 read -p "管理をするBlueskyのハンドルを入力してください: " FEEDGEN_PUBLISHER_IDENTIFIER
 echo "FEEDGEN_PUBLISHER_IDENTIFIER='$FEEDGEN_PUBLISHER_IDENTIFIER'" >> $output_file
@@ -46,11 +52,16 @@ read -p "Starrysky Consoleからログインするときに使うWeb Pass Keywor
 echo "EDIT_WEB_PASSKEY='$EDIT_WEB_PASSKEY'" >> $output_file
 
 echo "JETSTEAM_ENDPOINT='wss://jetstream.atproto.tools'" >> $output_file
-echo "FEEDGEN_SQLITE_LOCATION='/opt/StarryskyQueryEngine/db.sqlite'" >> $output_file
+echo "FEEDGEN_SQLITE_LOCATION='/opt/StarryskyQueryEngineDatabase/db.sqlite'" >> $output_file
 echo "FEEDGEN_PORT='3000'" >> $output_file
 
 # 実行完了メッセージ
 echo "設定ファイル $output_file が作成されました。"
 
-echo "ライブラリをインストール中です"
+echo ""
+echo "-----ライブラリをインストール中です----"
 npm install
+npm install -g ts-node
+
+cp starrysky.service /etc/systemd/system/
+sudo systemctl start starrysky.service
