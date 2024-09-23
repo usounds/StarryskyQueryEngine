@@ -1,12 +1,14 @@
 import dotenv from 'dotenv'
 import FeedGenerator from './server'
-import { BskyAgent } from '@atproto/api'
+import { AtpAgent } from '@atproto/api'
+import { Headers } from 'node-fetch';
+global.Headers = Headers;
 
 const run = async () => {
   dotenv.config()
 
-  let bskyAge = new BskyAgent({
-    service: 'https://bsky.social'
+  let bskyAge = new AtpAgent({
+    service: "https://api.bsky.app"
   })
 
   const ret = await bskyAge.resolveHandle({handle : process.env.FEEDGEN_PUBLISHER_IDENTIFIER||''})
