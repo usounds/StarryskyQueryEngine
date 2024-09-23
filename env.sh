@@ -37,9 +37,8 @@ echo "FEEDGEN_PUBLISHER_IDENTIFIER='$FEEDGEN_PUBLISHER_IDENTIFIER'" >> $output_f
 read -p "クリーンアップジョブを行う間隔(分)を入力してください。Jetstreamを使う場合は1が推奨されます: " FEEDGEN_CRON_INTERVAL
 echo "FEEDGEN_CRON_INTERVAL='$FEEDGEN_CRON_INTERVAL'" >> $output_file
 
-read -p "動作させるLinodeのドメインだけを入力してください: " FEEDGEN_HOSTNAME
-
-echo "変換されたホスト名は $CONVERTED_HOSTNAME です"
+read -p "動作させるLinodeのIPアドレスを入力してください: " FEEDGEN_HOSTNAME
+echo "FEEDGEN_HOSTNAME='$FEEDGEN_HOSTNAME'" >> $output_file
 
 read -p "Starrysky Consoleからログインするときに使うWeb Pass Keywordを入力してください: " EDIT_WEB_PASSKEY
 echo "EDIT_WEB_PASSKEY='$EDIT_WEB_PASSKEY'" >> $output_file
