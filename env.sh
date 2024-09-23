@@ -13,11 +13,10 @@ echo ""
 echo "-----Step 2:nginxをインストールしています-----"
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
-sudo yum install -y nginx
+sudo apt install -y nginx
 sudo systemctl start nginx
 sudo systemctl enable nginx
 
-echo "Configuring Nginx for domain $DOMAIN..."
 sudo tee /etc/nginx/conf.d/$DOMAIN.conf > /dev/null <<EOF
 server {
     listen 80;
@@ -32,6 +31,9 @@ server {
 }
 EOF
 
+echo ""
+echo "-----Step 3:証明書を設定しています-----"
+sudo apt install -y certbot python3-certbot-nginx
 sudo certbot --nginx -d $DOMAIN -m $EMAIL --agree-tos
 (crontab -l 2>/dev/null; echo "0 1 * * * /usr/bin/certbot renew >> /var/log/certbot-renew.log 2>&1") | crontab -
 
