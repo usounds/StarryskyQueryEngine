@@ -33,6 +33,7 @@ server {
 EOF
 
 sudo certbot --nginx -d $DOMAIN -m $EMAIL --agree-tos
+(crontab -l 2>/dev/null; echo "0 1 * * * /usr/bin/certbot renew >> /var/log/certbot-renew.log 2>&1") | crontab -
 
 # NVMをインストール
 echo ""
