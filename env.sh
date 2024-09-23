@@ -3,6 +3,8 @@
 
 read -p "このサーバーのドメインを入力してください: " DOMAIN
 read -p "メールアドレスを入力してください: " EMAIL
+read -p "管理をするBlueskyのハンドルを入力してください: " FEEDGEN_PUBLISHER_IDENTIFIER
+read -p "Starrysky Consoleからログインするときに使うWeb Pass Keywordを入力してください: " EDIT_WEB_PASSKEY
 
 echo "-----Step 1:OSのライブラリをバージョンアップしています-----"
 sudo apt update
@@ -29,10 +31,7 @@ server {
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
     }
-
-
 }
-
 server {
     server_name     $DOMAIN www.$DOMAIN;
     listen 80;
@@ -69,20 +68,9 @@ output_file=".env"
 # ファイルを初期化
 > $output_file
 
-# 対話型で環境変数の値を入力
-
-echo ""
-echo "ここからは対話式でセットアップします"
-echo ""
-
-read -p "管理をするBlueskyのハンドルを入力してください: " FEEDGEN_PUBLISHER_IDENTIFIER
 echo "FEEDGEN_PUBLISHER_IDENTIFIER='$FEEDGEN_PUBLISHER_IDENTIFIER'" >> $output_file
-
 echo "FEEDGEN_HOSTNAME='$DOMAIN'" >> $output_file
-
-read -p "Starrysky Consoleからログインするときに使うWeb Pass Keywordを入力してください: " EDIT_WEB_PASSKEY
 echo "EDIT_WEB_PASSKEY='$EDIT_WEB_PASSKEY'" >> $output_file
-
 echo "JETSTEAM_ENDPOINT='wss://jetstream.atproto.tools'" >> $output_file
 echo "FEEDGEN_SQLITE_LOCATION='/opt/StarryskyQueryEngineDatabase/db.sqlite'" >> $output_file
 echo "FEEDGEN_PORT='3000'" >> $output_file
