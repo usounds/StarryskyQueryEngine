@@ -8,8 +8,8 @@ ExecStart=npm run start
 Restart=always
 User=root
 WorkingDirectory=/opt/StarryskyQueryEngine
-StandardOutput=append:/var/log/myapp.log
-StandardError=append:/var/log/myapp.log
+StandardOutput=append:/var/log/starrysky.log
+StandardError=append:/var/log/starrysky.log
 
 [Install]
 WantedBy=multi-user.target
