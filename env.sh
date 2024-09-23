@@ -36,3 +36,6 @@ echo "EDIT_WEB_PASSKEY='$EDIT_WEB_PASSKEY'" >> $output_file
 
 # 実行完了メッセージ
 echo "設定ファイル $output_file が作成されました。"
+
+echo "ライブラリをインストール中です"
+npm install
