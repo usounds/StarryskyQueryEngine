@@ -1,12 +1,42 @@
 #!/bin/bash
 
+
+read -p "このサーバーのドメインを入力してください: " DOMAIN
+read -p "メールアドレスを入力してください: " EMAIL
+
 echo "-----Step 1:OSのライブラリをバージョンアップしています-----"
 sudo apt update
 sudo apt upgrade -y
 
+
+echo ""
+echo "-----Step 2:nginxをインストールしています-----"
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo yum install -y nginx
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+echo "Configuring Nginx for domain $DOMAIN..."
+sudo tee /etc/nginx/conf.d/$DOMAIN.conf > /dev/null <<EOF
+server {
+    listen 80;
+    server_name $DOMAIN www.$DOMAIN;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files \$uri \$uri/ =404;
+    }
+}
+EOF
+
+sudo certbot --nginx -d $DOMAIN -m $EMAIL --agree-tos
+
 # NVMをインストール
 echo ""
-echo "-----Step 2:nodeをバージョンアップしています-----"
+echo "-----Step 2:nodeをインストールしています-----"
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
