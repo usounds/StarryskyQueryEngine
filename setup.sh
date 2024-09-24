@@ -58,6 +58,7 @@ echo "-----Step 4:Starryskyのインストールしています----"
 cd /opt
 git clone -b preview https://github.com/usounds/StarryskyQueryEngine.git
 cd StarryskyQueryEngine
+chmod +x update.sh
 mkdir -p /opt/StarryskyQueryEngineDatabase/
 
 # 作成するファイルのパス
