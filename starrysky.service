@@ -10,6 +10,7 @@ User=root
 WorkingDirectory=/opt/StarryskyQueryEngine
 StandardOutput=append:/var/log/starrysky.log
 StandardError=append:/var/log/starrysky.log
+EnvironmentFile=/etc/default/StarryskyQueryEngineDatabase/env
 
 [Install]
 WantedBy=multi-user.target
