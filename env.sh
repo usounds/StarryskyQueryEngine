@@ -21,7 +21,7 @@ sudo systemctl enable nginx
 
 sudo tee /etc/nginx/sites-available/$DOMAIN > /dev/null <<EOF
 server {
-    server_name    $DOMAIN www.$DOMAIN;
+    server_name    $DOMAIN;
 
     location / {
         proxy_pass http://localhost:3000;
@@ -33,7 +33,7 @@ server {
     }
 }
 server {
-    server_name     $DOMAIN www.$DOMAIN;
+    server_name     $DOMAIN;
     listen 80;
 }
 EOF
