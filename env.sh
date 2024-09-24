@@ -48,15 +48,13 @@ sudo certbot --nginx -d $DOMAIN -m $EMAIL --agree-tos --non-interactive
 (crontab -l 2>/dev/null; echo "0 1 * * * /usr/bin/certbot renew >> /var/log/certbot-renew.log 2>&1") | crontab -
 sudo systemctl restart nginx
 
-# NVMをインストール
 echo ""
 echo "-----Step 4:nodeをインストールしています-----"
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
-
 echo ""
-echo "-----Step 4:Starryskyのインストール中です----"
+echo "-----Step 4:Starryskyのインストールしています----"
 cd /opt
 git clone -b preview https://github.com/usounds/StarryskyQueryEngine.git
 cd StarryskyQueryEngine
@@ -90,10 +88,6 @@ echo ""
 echo "-----Step 6:システムサービスに登録中です----"
 cp starrysky.service /etc/systemd/system/
 sudo systemctl start starrysky.service
-
-echo ""
-echo "-----Step 7:デフォルトのプロセスを削除します----"
-pm2 delete hello
 
 echo ""
 echo "-----設定は以上です。お疲れ様でした----"
