@@ -61,7 +61,7 @@ cd StarryskyQueryEngine
 mkdir -p /opt/StarryskyQueryEngineDatabase/
 
 # 作成するファイルのパス
-output_file=".env"
+output_file="/opt/StarryskyQueryEngineDatabase/.env"
 
 # ファイルを初期化
 > $output_file
