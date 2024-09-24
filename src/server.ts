@@ -10,9 +10,10 @@ import { ScpecificActorsSubscription } from './subscription'
 import { AppContext, Config } from './config'
 import wellKnown from './well-known'
 import databaseUtil from './databaseUtil'
-import {WebSocketReceiver} from './jerstream'
+import { WebSocketReceiver } from './jerstream'
 import fetch from 'node-fetch'
 import * as pkg from "../package.json"
+import { Conditions, getConditions } from './util/conditionsCheck'
 
 export function appVersion(): string {
   return pkg.version;
@@ -57,60 +58,69 @@ export class FeedGenerator {
     console.log('Admin Console URL is ' + adminConsoleEndpoint)
 
     if (process.env.FEEDGEN_HOSTNAME !== 'example.com') {
-      try {
-        const result = await fetch(adminConsoleEndpoint + "/api/getD1Query",
-          {
-            method: 'post', headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ serverUrl: serverUrl })
-          }
-        );
 
-        const resultObject = await result.json()
+      let conditions: Conditions[] = await getConditions(db)
 
-        if (resultObject.result === 'OK') {
-          for (let record of resultObject.resultRecord) {
-            let obj = {
-              key: record.key || '',
-              recordName: record.recordName || '',
-              query: record.query || '',
-              inputRegex: record.inputRegex || '',
-              invertRegex: record.invertRegex,
-              refresh: record.refresh || 0,
-              lang: record.lang,
-              labelDisable: record.labelDisable,
-              replyDisable: record.replyDisable,
-              imageOnly: record.imageOnly,
-              initPost: record.initPost || 100,
-              pinnedPost: record.pinnedPost,
-              limitCount: record.limitCount || 2000,
-              feedAvatar: record.feedAvatar,
-              feedName: record.feedName,
-              feedDescription: record.feedDescription,
-              includeAltText: record.includeAltText,
-              profileMatch: record.profileMatch,
-              customLabelerDid: record.customLabelerDid,
-              customLabelerLabelValues: record.customLabelerLabelValues,
-              inputType: record.inputType,
-              invetListUri: record.invetListUri,
-              enableExactMatch: record.enableExactMatch,
-              recordCount: 0
+      if (conditions.length === 0){
+
+        try {
+          const result = await fetch(adminConsoleEndpoint + "/api/getD1Query",
+            {
+              method: 'post', headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ serverUrl: serverUrl })
             }
+          );
 
-            await db
-              .insertInto('conditions')
-              .values(obj)
-              .onConflict(oc => oc.doNothing())
-              .execute()
+          const resultObject = await result.json()
 
-            console.log('Admin Consoleから検索条件を復元しました：' + record.key)
+          if (resultObject.result === 'OK') {
+            for (let record of resultObject.resultRecord) {
+              let obj = {
+                key: record.key || '',
+                recordName: record.recordName || '',
+                query: record.query || '',
+                inputRegex: record.inputRegex || '',
+                invertRegex: record.invertRegex,
+                refresh: record.refresh || 0,
+                lang: record.lang,
+                labelDisable: record.labelDisable,
+                replyDisable: record.replyDisable,
+                imageOnly: record.imageOnly,
+                initPost: record.initPost || 100,
+                pinnedPost: record.pinnedPost,
+                limitCount: record.limitCount || 2000,
+                feedAvatar: record.feedAvatar,
+                feedName: record.feedName,
+                feedDescription: record.feedDescription,
+                includeAltText: record.includeAltText,
+                profileMatch: record.profileMatch,
+                customLabelerDid: record.customLabelerDid,
+                customLabelerLabelValues: record.customLabelerLabelValues,
+                inputType: record.inputType,
+                invetListUri: record.invetListUri,
+                enableExactMatch: record.enableExactMatch,
+                recordCount: 0
+              }
+
+              await db
+                .insertInto('conditions')
+                .values(obj)
+                .onConflict(oc => oc.doNothing())
+                .execute()
+
+              console.log('Admin Consoleから検索条件を復元しました：' + record.key)
 
 
+            }
           }
+
+        } catch (e) {
+          console.error('Admin Consoleへ接続できず、検索条件は復元できませんでした。' + e)
         }
-      } catch (e) {
-        console.error('Admin Consoleへ接続できず、検索条件は復元できませんでした。' + e)
+      }else{
+        console.log('Query Engine内の検索条件が残っていました')
       }
     } else {
       console.log('example.comが指定されているので、検索条件は復元しませんでした')
@@ -142,8 +152,8 @@ export class FeedGenerator {
 
 
     let jetstream
-    if(cfg.jetstreamEndpoint){
-      jetstream = new WebSocketReceiver(cfg.jetstreamEndpoint,db)
+    if (cfg.jetstreamEndpoint) {
+      jetstream = new WebSocketReceiver(cfg.jetstreamEndpoint, db)
     }
 
     app.use(express.json());
@@ -153,13 +163,13 @@ export class FeedGenerator {
     describeGenerator(server, ctx)
     app.use(server.xrpc.router)
     app.use(wellKnown(ctx))
-    app.use(databaseUtil(ctx,jetstream))
+    app.use(databaseUtil(ctx, jetstream))
 
     return new FeedGenerator(app, db, actorsfeed, cfg)
   }
 
   async start(): Promise<http.Server> {
-   // await migrateToLatest(this.db)
+    // await migrateToLatest(this.db)
     this.actorsfeed.run()
     this.server = this.app.listen(this.cfg.port, this.cfg.listenhost)
     await events.once(this.server, 'listening')
