@@ -40,6 +40,7 @@ EOF
 
 sudo ln -s /etc/nginx/sites-available/.$DOMAIN /etc/nginx/sites-enabled/
 rm /etc/nginx/sites-enabled/default
+sudo systemctl restart nginx
 
 echo ""
 echo "-----Step 3:証明書を設定しています-----"
