@@ -23,13 +23,25 @@ export class WebSocketReceiver {
         this.startIntervalTask()
     }
 
-    private initialize() {
+    private async initialize() {
         this.host = 'wss://jetstream.atproto.tools'
 
         if (this.time_us === 0) {
-            const oneDayAgo = Date.now();
-            const oneDayAgoUnix = Math.floor(oneDayAgo / 1000); // UNIX時間に変換（秒）
-            this.time_us = oneDayAgoUnix;
+
+            // Condition tableからオブジェクトを変換
+            let conditionBuiler = this.db
+                .selectFrom('sub_state')
+                .selectAll()
+                .where('service', '=', 'jetstream')
+            const confitionRes = await conditionBuiler.execute()
+            if (confitionRes.length == 0) {
+                const oneDayAgo = Date.now();
+                const oneDayAgoUnix = Math.floor(oneDayAgo / 1000); // UNIX時間に変換（秒）
+                this.time_us = oneDayAgoUnix;
+            }else{
+                this.time_us = confitionRes[0].cursor
+                console.log('WebSocket subscription restore from:' + this.time_us)
+            }
         }
 
         const url = this.host + staticJetstreamParam + '&cursor=' + this.time_us
@@ -137,7 +149,7 @@ export class WebSocketReceiver {
                                     .onConflict(oc => oc.doNothing())
                                     .execute()
 
-                                    
+
                             }
                         }
                     }
@@ -173,24 +185,24 @@ export class WebSocketReceiver {
 
     private async executeTask() {
         console.log(`Websocket current time_us : ${this.formatTimestamp(this.time_us)} `);
-    
+
         if (this.time_us === 0) return;
-    
+
         // 現在の time_us が前回の値と同じ場合に this.initialize() を呼び出す
         if (this.time_us === this.previousTimeUs) {
             console.log('time_us has not changed. Reinitializing...');
             await this.initialize(); // initialize を呼び出して再接続
         }
-    
+
         // 前回のtime_usを更新
         this.previousTimeUs = this.time_us;
-    
+
         // バックフィル用のカーソル保存
         let obj = {
             service: 'jetstream',
             cursor: this.time_us,
         };
-    
+
         await this.db
             .insertInto('sub_state')
             .values(obj)
@@ -241,7 +253,7 @@ export class WebSocketReceiver {
         return `${formattedDate} (${diffFormatted})`;
     }
 
-    public currentTimeUs():string{
+    public currentTimeUs(): string {
 
         return this.time_us.toString()
 
