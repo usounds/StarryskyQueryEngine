@@ -4,6 +4,12 @@ import { record, imageObject, getIsDuplicate } from '../subscription'
 import { AtpAgent } from '@atproto/api'
 import { Database } from '../db'
 
+
+const agent = new AtpAgent({
+    service: 'https://api.bsky.app'
+})
+
+
 export interface Conditions {
     key: string;
     recordName: string;
@@ -130,13 +136,11 @@ export async function checkRecord(condition: Conditions, record: record, did: st
         return false
     }
 
+
     if ( condition.profileMatch  !== "") {
 
         if (serProfileStringsMap.size === 0) {
 
-            const agent = new AtpAgent({
-                service: 'https://api.bsky.app'
-            })
             let profileDID: string[] = []
             profileDID.push(did)
 
@@ -179,6 +183,27 @@ export async function checkRecord(condition: Conditions, record: record, did: st
         }
 
     }
+
+    //除外リスト
+    if (condition.invetListUri) {
+        let inverDidSet = new Set<string>();
+        const result = await agent.app.bsky.graph.getList(
+          {
+            list: condition.invetListUri,
+            limit: 100
+          }
+        )
+  
+        for (let obj of result.data.items) {
+          inverDidSet.add(obj.subject.did)
+        }
+
+
+        if (inverDidSet.size > 0 && inverDidSet.has(did)) {
+            return false
+          }
+
+      }
 
     return true
 }
