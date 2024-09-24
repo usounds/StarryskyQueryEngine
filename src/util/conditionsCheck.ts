@@ -89,12 +89,10 @@ export async function checkRecord(condition: Conditions, record: record, did: st
     let text = record.text || ''
 
     if (condition.lang && record.langs) {
-        let langs: string[] = [condition.lang]
-        if (!getIsDuplicate(langs, record.langs)) {
+        if (!record.langs.includes(condition.lang)) {
             return false
-
         }
-    }
+    }    
 
     // 検索APIがALT TEXTの検索ができないので削除
     if (condition.includeAltText === "true" && record.embed !== undefined && record.embed.images !== undefined) {
@@ -152,7 +150,6 @@ export async function checkRecord(condition: Conditions, record: record, did: st
         }
 
         //プロファイルマッチが有効化されており、かつ、検索ワードの1つにしか合致していない
-        let skip = false
         if (condition.profileMatch  !== "") {
             const [textTerm, profileRegexText] = condition.profileMatch.split('::')
             const textTermRegex = new RegExp(textTerm || '', 'ig')       //プロフィールマッチ用正規表現
@@ -176,13 +173,11 @@ export async function checkRecord(condition: Conditions, record: record, did: st
 
                 //指定された文字が投稿本文に含まれる場合は、Regex指定された文字列がプロフィールになければ除外
                 if (!profileText.match(profileRegex)) {
-                    skip = true
                     return false
                 }
             }
         }
 
-        if (skip) return false
     }
 
     return true
