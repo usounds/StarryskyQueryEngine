@@ -26,10 +26,10 @@ server {
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
     }
 }
 server {
@@ -37,6 +37,9 @@ server {
     listen 80;
 }
 EOF
+
+sudo ln -s /etc/nginx/sites-available/.$DOMAIN /etc/nginx/sites-enabled/
+rm /etc/nginx/sites-enabled/default
 
 echo ""
 echo "-----Step 3:証明書を設定しています-----"
@@ -46,13 +49,9 @@ sudo certbot --nginx -d $DOMAIN -m $EMAIL --agree-tos
 
 # NVMをインストール
 echo ""
-echo "-----Step 2:nodeをインストールしています-----"
+echo "-----Step 4:nodeをインストールしています-----"
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
-
-echo ""
-echo "-----Step 3:makeのインストール中です----"
-sudo apt install -y build-essential
 
 
 echo ""
