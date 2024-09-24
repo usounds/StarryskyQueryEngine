@@ -44,7 +44,7 @@ sudo rm /etc/nginx/sites-available/default
 echo ""
 echo "-----Step 3:証明書を設定しています-----"
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d $DOMAIN -m $EMAIL --agree-tos --non-interactive
+sudo certbot --nginx -d $DOMAIN -m $EMAIL --agree-tos
 (crontab -l 2>/dev/null; echo "0 1 * * * /usr/bin/certbot renew >> /var/log/certbot-renew.log 2>&1") | crontab -
 sudo systemctl restart nginx
 
