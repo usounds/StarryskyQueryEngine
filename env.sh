@@ -80,7 +80,6 @@ echo "設定ファイル $output_file が作成されました。"
 echo ""
 echo "-----Step 5:ライブラリをインストール中です----"
 sudo apt install -y build-essential
-
 npm install
 npm install -g ts-node
 
