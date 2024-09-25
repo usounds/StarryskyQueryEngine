@@ -1,9 +1,9 @@
 #!/bin/bash
 
 git fetch origin
-git stash
-git pull --quiet origin preview
-git stash pop
+git reset --hard origin/preview
+git pull --quiet --rebase origin preview
+chmod +x update.sh
 
 npm install
 sudo systemctl stop starrysky.service
