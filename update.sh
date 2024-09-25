@@ -11,7 +11,7 @@ echo "-"
 echo "-----Step 2:ライブラリをアップデートします-----"
 npm install
 
-echo "-"
+echo ""
 echo "-----Step 3:サービスを再起動します-----"
 sudo systemctl stop starrysky.service
 sudo systemctl start starrysky.service
