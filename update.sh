@@ -1,4 +1,5 @@
 #!/bin/bash
+cd /opt/StarryskyQueryEngine
 
 git fetch origin
 git reset --hard origin/preview
