@@ -7,7 +7,7 @@ git reset --hard origin/preview
 git pull --quiet --rebase origin preview
 chmod +x update.sh
 
-echo "-"
+echo ""
 echo "-----Step 2:ライブラリをアップデートします-----"
 npm install
 
