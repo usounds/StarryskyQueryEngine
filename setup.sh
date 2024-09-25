@@ -91,6 +91,7 @@ EOF
 
     sudo ln -s /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
     sudo rm /etc/nginx/sites-available/default
+    sudo rm /etc/nginx/sites-enabled/default
     save_state 2
 fi
 
