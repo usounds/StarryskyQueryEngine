@@ -40,7 +40,7 @@ export class WebSocketReceiver {
                 this.time_us = oneDayAgoUnix;
             }else{
                 this.time_us = confitionRes[0].cursor
-                console.log('WebSocket subscription restore from:' + this.time_us)
+                console.log(`WebSocket subscription restore from: ${this.formatTimestamp(this.time_us)} `);
             }
         }
 
