@@ -45,6 +45,7 @@ export async function getConditions(db: Database): Promise<Conditions[]> {
     let conditionBuiler = db
         .selectFrom('conditions')
         .selectAll()
+        .orderBy('key')
     const confitionRes = await conditionBuiler.execute()
 
     const conditions = confitionRes.map((row: any) => ({
