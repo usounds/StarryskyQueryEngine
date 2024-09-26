@@ -14,7 +14,7 @@ git pull --quiet --rebase origin preview
 chmod +x update.sh
 
 echo ""
-echo "-----Step 3:ライブラリをアップデートします-----"
+echo "-----Step 3:Starryskyのライブラリをアップデートします-----"
 npm install
 
 echo ""

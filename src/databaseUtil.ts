@@ -189,6 +189,54 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
         }
     })
 
+
+    //データ取得
+    router.post('/getAllQuery', async (req: express.Request, res) => {
+        console.log('Operation mode:getAllQuery')
+        const requestWebPasskey = req.headers['x-starrtsky-webpasskey']
+        if (process.env.EDIT_WEB_PASSKEY !== undefined && requestWebPasskey !== process.env.EDIT_WEB_PASSKEY) {
+            res.sendStatus(401)
+        } else {
+            let conditionBuiler = ctx.db
+                .selectFrom('conditions')
+                .selectAll()
+                .orderBy('key')
+            const confitionRes = await conditionBuiler.execute()
+
+            if (confitionRes.length === 0) {
+                res.json({
+                    result: 'NOT_FOUND',
+                    message: 'Specified key not found. ' + req.body.key,
+                    queryEngineVersion: appVersion()
+                })
+                return
+            }
+
+            let time_us = '0'
+            if(jetsrteam){
+                time_us = jetsrteam.currentTimeUs()
+            }
+
+            let returnObj;
+            let feedInfo: { key: string; feedName: string; feedDescription: string }[] = []; // `key` の型を指定
+            for (let obj of confitionRes) {
+                feedInfo.push({
+                    key: obj.key || '',
+                    feedName: obj.feedName || '',
+                    feedDescription: obj.feedDescription || ''
+                });
+            }
+            
+            returnObj = {
+                result: "OK",
+                queryEngineVersion: appVersion(),
+                timeUs: time_us,
+                feeds:feedInfo,
+            }
+            res.json(returnObj)
+        }
+    })
+
     //フィード削除
     router.post('/deleteCondition', async (req: express.Request, res) => {
         console.log('Operation mode:deleteCondition:' + req.body.key)
