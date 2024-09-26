@@ -3,8 +3,8 @@ cd /opt/StarryskyQueryEngine
 
 
 echo "-----Step 1:OSのライブラリをアップデートします-----"
-sudo systemctl stop starrysky.service
-sudo systemctl start starrysky.service
+sudo apt update
+sudo apt upgrade -y
 echo ""
 
 echo "-----Step 2:Starryskyの最新の資材を取り込みます-----"
@@ -15,8 +15,7 @@ chmod +x update.sh
 
 echo ""
 echo "-----Step 3:ライブラリをアップデートします-----"
-sudo apt update
-sudo apt upgrade -y
+npm install
 
 echo ""
 echo "-----Step 4:サービスを再起動します-----"
