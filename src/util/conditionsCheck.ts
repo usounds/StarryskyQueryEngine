@@ -84,6 +84,7 @@ export async function getConditions(db: Database): Promise<Conditions[]> {
 export async function checkRecord(condition: Conditions, record: record, did: string, serProfileStringsMap: Map<string, string>): Promise<boolean> {
     const invertRegex = new RegExp(condition.invertRegex, 'i') //除外用正規表現
 
+    try{
     let inputRegexExp //抽出正規表現
     if ( condition.enableExactMatch==='true') {
       let persedQuery = condition.query as string
@@ -101,8 +102,8 @@ export async function checkRecord(condition: Conditions, record: record, did: st
         }
     }    
 
-    // 検索APIがALT TEXTの検索ができないので削除
-    if (condition.includeAltText === "true" && record.embed !== undefined && record.embed.images !== undefined) {
+    // ALT Textも検索する場合は文字列をくっつける
+    if (condition.includeAltText === "true" && record.embed && record.embed.images) {
         for (let image of record.embed.images) {
             text = text + '\n' + image.alt
         }
@@ -205,6 +206,11 @@ export async function checkRecord(condition: Conditions, record: record, did: st
           }
 
       }
+    }catch(e){
+        console.error(e)
+        console.error(record)
+        return false
+    }
 
     return true
 }
