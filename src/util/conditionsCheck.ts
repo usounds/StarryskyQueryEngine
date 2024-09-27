@@ -107,7 +107,7 @@ const addBoundaryForAlphabetWords = (input: string): string => {
         if (/^[ァ-ヴー]+$/.test(part)) {
             //console.log(part+":カタカナ")
             // 前後がカタカナではない場合に条件を追加
-            return `(^|[^ァ-ヴー])${part}([^ァ-ヴー]|$)`; // ここでエスケープした正規表現を返す
+            return `(^|[^ァ-ヴ])${part}([^ァ-ヴ]|$)`; // ここでエスケープした正規表現を返す
         }
         //console.log(part+":どれでもない")
         return part; // アルファベット以外の場合はそのまま
