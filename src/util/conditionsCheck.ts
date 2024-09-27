@@ -207,13 +207,14 @@ export async function checkRecord(condition: Conditions, record: record, did: st
             if (condition.profileMatch !== "") {
                 const [textTerm, profileRegexText] = condition.profileMatch.split('::')
                 let tempTextTeem = textTerm
-                let tempPprofileRegexText = profileRegexText
+                let tempProfileRegexText = profileRegexText
                 if (condition.enableExactMatch === 'true') {
                     tempTextTeem = addBoundaryForAlphabetWords(tempTextTeem)
-                    tempPprofileRegexText = addBoundaryForAlphabetWords(tempTextTeem)
+                    tempProfileRegexText = addBoundaryForAlphabetWords(tempProfileRegexText)
+
                 }
                 const textTermRegex = new RegExp(tempTextTeem || '', 'ig')       //プロフィールマッチ用正規表現
-                const profileRegex = new RegExp(tempPprofileRegexText || '', 'i')//除外用正規表現
+                const profileRegex = new RegExp(tempProfileRegexText || '', 'i')//除外用正規表現
                 const matchesWithProfile = (text.match(textTermRegex) || []).length
 
                 if (process.env.DEBUG_MODE) {
