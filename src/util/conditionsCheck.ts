@@ -103,9 +103,9 @@ const addBoundaryForAlphabetWords = (input: string): string => {
       }
 
       // カタカナだけ
-      if (/^[ァ-ヶｦ-ﾟ・]+$/.test(part)) {
+      if (/^[ァ-ヶｦ-ﾟ]+$/.test(part)) {
         // 前後がカタカナではない場合に条件を追加
-        return `(?<![ァ-ヶｦ-ﾟ・])${part}(?![ァ-ヶｦ-ﾟ・])`;
+        return `(?<![ァ-ヶｦ-ﾟ])${part}(?![ァ-ヶｦ-ﾟ])`;
       }
       return part; // アルファベット以外の場合はそのまま
     });
@@ -133,7 +133,14 @@ export async function checkRecord(condition: Conditions, record: record, did: st
 
     let text = record.text || ''
 
-    if (condition.lang && record.langs) {
+    //言語フィルタに何か設定されている
+    if (condition.lang) {
+        // 投稿のLangがない
+        if(!record.langs){
+            return false
+        }
+
+        // 投稿のlangに言語フィルタに含まれる言語が含まれていない
         if (!record.langs.includes(condition.lang)) {
             return false
         }
@@ -195,9 +202,14 @@ export async function checkRecord(condition: Conditions, record: record, did: st
         //プロファイルマッチが有効化されており、かつ、検索ワードの1つにしか合致していない
         if (condition.profileMatch  !== "") {
             const [textTerm, profileRegexText] = condition.profileMatch.split('::')
-            const textTermRegex = new RegExp(textTerm || '', 'ig')       //プロフィールマッチ用正規表現
-            const profileRegex = new RegExp(profileRegexText || '', 'i')//除外用正規表現
-
+            let tempTextTeem = textTerm
+            let tempPprofileRegexText = profileRegexText
+            if(condition.enableExactMatch==='true'){
+                tempTextTeem = addBoundaryForAlphabetWords(tempTextTeem)
+                tempPprofileRegexText = addBoundaryForAlphabetWords(tempTextTeem)
+            }
+            const textTermRegex = new RegExp(tempTextTeem || '', 'ig')       //プロフィールマッチ用正規表現
+            const profileRegex = new RegExp(tempPprofileRegexText || '', 'i')//除外用正規表現
             const matchesWithProfile = (text.match(textTermRegex) || []).length
 
             if (process.env.DEBUG_MODE) {
