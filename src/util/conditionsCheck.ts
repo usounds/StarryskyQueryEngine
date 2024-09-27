@@ -97,16 +97,19 @@ const addBoundaryForAlphabetWords = (input: string): string => {
     // 各部分を処理して、アルファベットのみの単語に条件を追加
     const updatedParts = parts.map((part) => {
         // アルファベットまたは数字のみかどうかを確認
-        if (/^[\p{L}0-9]+$/u.test(part)) {
+        if (/^[A-Za-zÀ-ÿ0-9]+$/.test(part)) {
+            console.log(part+":アルファベット")
             // アルファベットと数字のみの単語であれば、前後に他のアルファベットや数字がないことを確認
-            return `(?<![\\p{L}\\p{N}])\\b${part}\\b(?![\\p{L}\\p{N}])`;
+            return `(?<![\\p{L}\\p{N}])${part}(?![\\p{L}\\p{N}])`
         }
 
         // カタカナだけ
-        if (/^[ァ-ヶｦ-ﾟ]+$/.test(part)) {
+        if (/^[ァ-ヴー]+$/.test(part)) {
+            console.log(part+":カタカナ")
             // 前後がカタカナではない場合に条件を追加
-            return `(?<![ァ-ヶｦ-ﾟ])${part}(?![ァ-ヶｦ-ﾟ])`;
+            return `(?<![ァ-ヴー])${part}(?![ァ-ヴー])`
         }
+        console.log(part+":どれでもない")
         return part; // アルファベット以外の場合はそのまま
     });
 
@@ -126,7 +129,6 @@ export async function checkRecord(condition: Conditions, record: record, did: st
         if (condition.enableExactMatch === 'true') {
             let persedQuery = condition.query as string
             persedQuery = addBoundaryForAlphabetWords(persedQuery.replace(/"/g, ""))
-            //console.log(persedQuery)
             inputRegexExp = new RegExp(persedQuery as string, 'ig')
         } else {
             inputRegexExp = new RegExp(condition.inputRegex as string, 'ig')
@@ -158,9 +160,9 @@ export async function checkRecord(condition: Conditions, record: record, did: st
         const matches = (text.match(inputRegexExp) || []).length
         if (matches == 0) {
             return false
-        }else{
-//            console.log(text)
-//            console.log(text.match(inputRegexExp))
+        } else {
+            //            console.log(text)
+            //            console.log(text.match(inputRegexExp))
         }
 
         //埋め込みURL
