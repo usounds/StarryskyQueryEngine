@@ -81,6 +81,25 @@ export async function getConditions(db: Database): Promise<Conditions[]> {
     return conditions
 }
 
+const addBoundaryForAlphabetWords = (input: string): string => {
+    // 区切り文字で単語を分割する
+    const parts = input.split('|');
+  
+    // 各部分を処理して、アルファベットのみの単語に条件を追加
+    const updatedParts = parts.map((part) => {
+      // アルファベットのみかどうかを確認
+      if (/^[A-Za-z0-9]+$/.test(part)) {
+        // アルファベットのみの単語であれば前後に否定の先読み・後読みを追加
+        return `(?<![A-Za-z0-9])${part}(?![A-Za-z0-9])`;
+      }
+      return part; // アルファベット以外の場合はそのまま
+    });
+  
+    // 処理後のパーツを '|' で再結合して返す
+    return updatedParts.join('|');
+  };
+  
+
 export async function checkRecord(condition: Conditions, record: record, did: string, serProfileStringsMap: Map<string, string>): Promise<boolean> {
     const invertRegex = new RegExp(condition.invertRegex, 'i') //除外用正規表現
 
@@ -88,7 +107,7 @@ export async function checkRecord(condition: Conditions, record: record, did: st
     let inputRegexExp //抽出正規表現
     if ( condition.enableExactMatch==='true') {
       let persedQuery = condition.query as string
-      persedQuery = persedQuery.replace(/"/g, "");
+      persedQuery = addBoundaryForAlphabetWords(persedQuery.replace(/"/g, ""))
       inputRegexExp = new RegExp(persedQuery as string, 'ig')
     } else {
       inputRegexExp = new RegExp(condition.inputRegex as string, 'ig')
