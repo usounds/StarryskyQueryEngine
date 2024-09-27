@@ -82,21 +82,39 @@ export async function getConditions(db: Database): Promise<Conditions[]> {
 }
 
 const addBoundaryForAlphabetWords = (input: string): string => {
+    // 入力がカッコで囲まれているかを確認
+    const hasParentheses = input.startsWith('(') && input.endsWith(')');
+    
+    // カッコがある場合、最初と最後のカッコを除去
+    let content = input;
+    if (hasParentheses) {
+      content = input.slice(1, -1); // カッコを除去
+    }
+  
     // 区切り文字で単語を分割する
-    const parts = input.split('|');
+    const parts = content.split('|');
   
     // 各部分を処理して、アルファベットのみの単語に条件を追加
     const updatedParts = parts.map((part) => {
-      // アルファベットのみかどうかを確認
+      // アルファベットまたは数字のみかどうかを確認
       if (/^[A-Za-z0-9]+$/.test(part)) {
-        // アルファベットのみの単語であれば前後に否定の先読み・後読みを追加
+        // アルファベットと数字のみの単語であれば前後に否定の先読み・後読みを追加
         return `(?<![A-Za-z0-9])${part}(?![A-Za-z0-9])`;
+      }
+
+      // カタカナだけ
+      if (/^[ァ-ヶｦ-ﾟ・]+$/.test(part)) {
+        // 前後がカタカナではない場合に条件を追加
+        return `(?<![ァ-ヶｦ-ﾟ・])${part}(?![ァ-ヶｦ-ﾟ・])`;
       }
       return part; // アルファベット以外の場合はそのまま
     });
   
-    // 処理後のパーツを '|' で再結合して返す
-    return updatedParts.join('|');
+    // 処理後のパーツを '|' で再結合
+    const result = updatedParts.join('|');
+  
+    // もともとカッコがあった場合は再びカッコを追加
+    return hasParentheses ? `(${result})` : result;
   };
   
 
@@ -108,6 +126,7 @@ export async function checkRecord(condition: Conditions, record: record, did: st
     if ( condition.enableExactMatch==='true') {
       let persedQuery = condition.query as string
       persedQuery = addBoundaryForAlphabetWords(persedQuery.replace(/"/g, ""))
+      console.log(persedQuery)
       inputRegexExp = new RegExp(persedQuery as string, 'ig')
     } else {
       inputRegexExp = new RegExp(condition.inputRegex as string, 'ig')
