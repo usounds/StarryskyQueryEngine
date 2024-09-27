@@ -126,7 +126,6 @@ export async function checkRecord(condition: Conditions, record: record, did: st
     if ( condition.enableExactMatch==='true') {
       let persedQuery = condition.query as string
       persedQuery = addBoundaryForAlphabetWords(persedQuery.replace(/"/g, ""))
-      console.log(persedQuery)
       inputRegexExp = new RegExp(persedQuery as string, 'ig')
     } else {
       inputRegexExp = new RegExp(condition.inputRegex as string, 'ig')
