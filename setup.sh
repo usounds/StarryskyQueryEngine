@@ -169,6 +169,7 @@ if [ "$(get_state)" -lt "8" ]; then
     echo "-----Step 8:システムサービスに登録中です-----"
     cp starrysky.service /etc/systemd/system/
     sudo systemctl start starrysky.service
+    sudo systemctl enable starrysky.service
     save_state 8
 fi
 
