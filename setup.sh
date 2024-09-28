@@ -151,7 +151,6 @@ if [ "$(get_state)" -lt "6" ]; then
     sudo apt install -y build-essential
     yarn install
     yarn audit --fix
-    yarn global add ts-node
     save_state 6
 fi
 
