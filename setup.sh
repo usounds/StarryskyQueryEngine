@@ -146,9 +146,9 @@ if [ "$(get_state)" -lt "6" ]; then
     echo ""
     echo "-----Step 6:ライブラリをインストール中です-----"
     sudo apt install -y build-essential
-    npm install
-    npm audit fix
-    npm install -g ts-node
+    yarn install
+    yarn audit --fix
+    yarn add -g ts-node
     save_state 6
 fi
 
