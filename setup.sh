@@ -106,12 +106,15 @@ if [ "$(get_state)" -lt "3" ]; then
     save_state 3
 fi
 
-# ステップ4: Node.jsのインストール
+# ステップ4: yarnとNodeのインストール
 if [ "$(get_state)" -lt "4" ];then
     echo ""
-    echo "-----Step 4:nodeをインストールしています-----"
+    echo "-----Step 4:yarnとnodeをインストールしています-----"
     curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-    sudo apt install -y nodejs
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+    sudo apt update
+    sudo apt install -y yarn nodejs
     save_state 4
 fi
 
@@ -146,9 +149,9 @@ if [ "$(get_state)" -lt "6" ]; then
     echo ""
     echo "-----Step 6:ライブラリをインストール中です-----"
     sudo apt install -y build-essential
-    npm install
-    npm audit fix
-    npm install -g ts-node
+    yarn install
+    yarn audit --fix
+    yarn global add ts-node
     save_state 6
 fi
 
