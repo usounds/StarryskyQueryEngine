@@ -145,7 +145,7 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
                 return
             }
 
-            let time_us = '0'
+            let time_us = ''
             if(jetsrteam){
                 time_us = jetsrteam.currentTimeUs()
             }
