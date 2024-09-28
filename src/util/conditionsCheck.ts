@@ -100,7 +100,7 @@ const addBoundaryForAlphabetWords = (input: string): string => {
         if (/^[A-Za-zÀ-ÿ0-9]+$/.test(part)) {
             //console.log(part+":アルファベット")
             // アルファベットと数字のみの単語であれば、前後に他のアルファベットや数字がないことを確認
-            return `(^|[^A-Za-zÀ-ÿ0-9])${part}([^A-Za-zÀ-ÿ0-9]|$)`; // ここでエスケープした正規表現を返す
+            return`\\b${part}\\b`; // ここでエスケープした正規表現を返す
         }
 
         // カタカナだけ
