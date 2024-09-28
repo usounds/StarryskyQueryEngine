@@ -106,22 +106,31 @@ if [ "$(get_state)" -lt "3" ]; then
     save_state 3
 fi
 
-# ステップ4: yarnとNodeのインストール
+# ステップ4:Nodeのインストール
 if [ "$(get_state)" -lt "4" ];then
     echo ""
-    echo "-----Step 4:yarnとnodeをインストールしています-----"
+    echo "-----Step 4:nodeをインストールしています-----"
     curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-    echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
     sudo apt update
-    sudo apt install -y yarn nodejs
+    sudo apt install -y nodejs
     save_state 4
 fi
 
-# ステップ5: Starryskyのインストール
+# ステップ5: yarnのインストール
 if [ "$(get_state)" -lt "5" ];then
     echo ""
-    echo "-----Step 5:Starryskyのインストールしています-----"
+    echo "-----Step 5:yarnをインストールしています-----"
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+    sudo apt update
+    sudo apt install -y yarn
+    save_state 5
+fi
+
+# ステップ5: Starryskyのインストール
+if [ "$(get_state)" -lt "6" ];then
+    echo ""
+    echo "-----Step 6:Starryskyのインストールしています-----"
     cd /opt
     git clone -b preview https://github.com/usounds/StarryskyQueryEngine.git
     cd StarryskyQueryEngine
@@ -141,26 +150,26 @@ if [ "$(get_state)" -lt "5" ];then
     echo "FEEDGEN_CRON_INTERVAL='1'" >> $output_file
 
     echo "設定ファイル $output_file が作成されました。"
-    save_state 5
-fi
-
-# ステップ6: ライブラリのインストール
-if [ "$(get_state)" -lt "6" ]; then
-    echo ""
-    echo "-----Step 6:ライブラリをインストール中です-----"
-    sudo apt install -y build-essential
-    yarn install
-    yarn audit --fix
     save_state 6
 fi
 
-# ステップ7: システムサービスに登録
+# ステップ7: ライブラリのインストール
 if [ "$(get_state)" -lt "7" ]; then
     echo ""
-    echo "-----Step 7:システムサービスに登録中です-----"
+    echo "-----Step 7:ライブラリをインストール中です-----"
+    sudo apt install -y build-essential
+    yarn install
+    yarn audit --fix
+    save_state 7
+fi
+
+# ステップ8: システムサービスに登録
+if [ "$(get_state)" -lt "8" ]; then
+    echo ""
+    echo "-----Step 8:システムサービスに登録中です-----"
     cp starrysky.service /etc/systemd/system/
     sudo systemctl start starrysky.service
-    save_state 7
+    save_state 8
 fi
 
 # 中間ファイルを削除
