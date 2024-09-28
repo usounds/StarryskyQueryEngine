@@ -147,6 +147,7 @@ if [ "$(get_state)" -lt "6" ]; then
     echo "-----Step 6:ライブラリをインストール中です-----"
     sudo apt install -y build-essential
     npm install
+    npm audit fix
     npm install -g ts-node
     save_state 6
 fi

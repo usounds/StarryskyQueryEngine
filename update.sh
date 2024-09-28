@@ -16,6 +16,7 @@ chmod +x update.sh
 echo ""
 echo "-----Step 3:Starryskyのライブラリをアップデートします-----"
 npm install
+npm audit fix
 
 echo ""
 echo "-----Step 4:サービスを再起動します-----"
