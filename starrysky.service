@@ -4,7 +4,7 @@ Description=StarryskyQueryEngine
 After=network.target
 
 [Service]
-ExecStart=yarn start
+ExecStart=npm run start
 Restart=always
 User=root
 WorkingDirectory=/opt/StarryskyQueryEngine
