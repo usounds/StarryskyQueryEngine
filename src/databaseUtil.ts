@@ -218,12 +218,13 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
             }
 
             let returnObj;
-            let feedInfo: { key: string; feedName: string; feedDescription: string }[] = []; // `key` の型を指定
+            let feedInfo: { key: string; feedName: string; feedDescription: string ,recordName:string}[] = []; // `key` の型を指定
             for (let obj of confitionRes) {
                 feedInfo.push({
                     key: obj.key || '',
                     feedName: obj.feedName || '',
-                    feedDescription: obj.feedDescription || ''
+                    feedDescription: obj.feedDescription || '',
+                    recordName:obj.recordName||'',
                 });
             }
             
