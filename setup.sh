@@ -60,77 +60,61 @@ if [ "$(get_state)" -lt "1" ]; then
     save_state 1
 fi
 
-# ステップ2: nginxのインストール
+# ステップ2: caddyのインストール
 if [ "$(get_state)" -lt "2" ]; then
     echo ""
-    echo "-----Step 2:nginxをインストールしています-----"
+    echo "-----Step 2:caddyをインストールしています-----"
     sudo ufw allow 80/tcp
     sudo ufw allow 443/tcp
-    sudo apt install -y nginx
-    sudo systemctl start nginx
-    sudo systemctl enable nginx
+    sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+    sudo apt update
+    sudo apt install caddy
 
-    sudo tee /etc/nginx/sites-available/$DOMAIN > /dev/null <<EOF
-server {
-    server_name    $DOMAIN;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_cache_bypass \$http_upgrade;
-    }
+    sudo tee /etc/caddy/Caddyfile > /dev/null <<EOF
+{
+    email $EMAIL
 }
-server {
-    server_name     $DOMAIN;
-    listen 80;
+
+$DOMAIN {
+    tls {
+        on_demand
+    }
+    reverse_proxy localhost:3000
 }
 EOF
 
-    sudo ln -s /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/
-    sudo rm /etc/nginx/sites-available/default
-    sudo rm /etc/nginx/sites-enabled/default
+    sudo systemctl start caddy
+    sudo systemctl enable caddy
     save_state 2
 fi
 
-# ステップ3: SSL証明書の設定
-if [ "$(get_state)" -lt "3" ]; then
+# ステップ3:Nodeのインストール
+if [ "$(get_state)" -lt "3" ];then
     echo ""
-    echo "-----Step 3:証明書を設定しています-----"
-    sudo apt install -y certbot python3-certbot-nginx
-    sudo certbot --nginx -d $DOMAIN -m $EMAIL --agree-tos
-    (crontab -l 2>/dev/null; echo "0 1 * * * /usr/bin/certbot renew >> /var/log/certbot-renew.log 2>&1") | crontab -
-    sudo systemctl restart nginx
-    save_state 3
-fi
-
-# ステップ4:Nodeのインストール
-if [ "$(get_state)" -lt "4" ];then
-    echo ""
-    echo "-----Step 4:nodeをインストールしています-----"
+    echo "-----Step 3:nodeをインストールしています-----"
     curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
     sudo apt update
     sudo apt install -y nodejs
-    save_state 4
+    save_state 3
 fi
 
-# ステップ5: yarnのインストール
-if [ "$(get_state)" -lt "5" ];then
+# ステップ4: yarnのインストール
+if [ "$(get_state)" -lt "4" ];then
     echo ""
-    echo "-----Step 5:yarnをインストールしています-----"
+    echo "-----Step 4:yarnをインストールしています-----"
     curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
     sudo apt update
     sudo apt install -y yarn
-    save_state 5
+    save_state 4
 fi
 
 # ステップ5: Starryskyのインストール
-if [ "$(get_state)" -lt "6" ];then
+if [ "$(get_state)" -lt "5" ];then
     echo ""
-    echo "-----Step 6:Starryskyのインストールしています-----"
+    echo "-----Step 5:Starryskyのインストールしています-----"
     cd /opt
     git clone -b preview https://github.com/usounds/StarryskyQueryEngine.git
     cd StarryskyQueryEngine
@@ -150,27 +134,27 @@ if [ "$(get_state)" -lt "6" ];then
     echo "FEEDGEN_CRON_INTERVAL='1'" >> $output_file
 
     echo "設定ファイル $output_file が作成されました。"
-    save_state 6
+    save_state 5
 fi
 
-# ステップ7: ライブラリのインストール
-if [ "$(get_state)" -lt "7" ]; then
+# ステップ6: ライブラリのインストール
+if [ "$(get_state)" -lt "6" ]; then
     echo ""
-    echo "-----Step 7:ライブラリをインストール中です-----"
+    echo "-----Step 6:ライブラリをインストール中です-----"
     sudo apt install -y build-essential
     yarn install
     yarn audit --fix
-    save_state 7
+    save_state 6
 fi
 
-# ステップ8: システムサービスに登録
-if [ "$(get_state)" -lt "8" ]; then
+# ステップ7: システムサービスに登録
+if [ "$(get_state)" -lt "7" ]; then
     echo ""
-    echo "-----Step 8:システムサービスに登録中です-----"
+    echo "-----Step 7:システムサービスに登録中です-----"
     cp starrysky.service /etc/systemd/system/
     sudo systemctl start starrysky.service
     sudo systemctl enable starrysky.service
-    save_state 8
+    save_state 7
 fi
 
 # 中間ファイルを削除
