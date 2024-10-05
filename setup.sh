@@ -39,14 +39,21 @@ load_inputs
 if [ -z "$DOMAIN" ]; then
     read -p "このサーバーのドメインを入力してください: " DOMAIN
 fi
-if [ -z "$EMAIL" ]; then
-    read -p "メールアドレスを入力してください: " EMAIL
-fi
 if [ -z "$FEEDGEN_PUBLISHER_IDENTIFIER" ]; then
     read -p "管理をするBlueskyのハンドルを入力してください: " FEEDGEN_PUBLISHER_IDENTIFIER
 fi
 if [ -z "$EDIT_WEB_PASSKEY" ]; then
     read -p "Starrysky Consoleからログインするときに使うWeb Pass Keywordを入力してください: " EDIT_WEB_PASSKEY
+fi
+
+# Caddyの初期設定を行うか確認
+read -p "Caddyの初期設定を行いますか？ (n/Y): " setup_caddy
+
+if [ "$setup_caddy" = "Y" ] || [ "$setup_caddy" = "y" ]; then
+    # メールアドレスを入力させる
+    if [ -z "$EMAIL" ];then
+        read -p "メールアドレスを入力してください: " EMAIL
+    fi
 fi
 
 # 入力データを保存
@@ -57,15 +64,15 @@ if [ "$(get_state)" -lt "1" ]; then
     echo "-----Step 1:OSのライブラリをバージョンアップしています-----"
     sudo apt update
     sudo apt upgrade -y
+    sudo ufw allow 80/tcp
+    sudo ufw allow 443/tcp
     save_state 1
 fi
 
 # ステップ2: caddyのインストール
-if [ "$(get_state)" -lt "2" ]; then
+if [ "$(get_state)" -lt "2" ] && ( [ "$setup_caddy" = "Y" ] || [ "$setup_caddy" = "y" ]); then
     echo ""
     echo "-----Step 2:caddyをインストールしています-----"
-    sudo ufw allow 80/tcp
-    sudo ufw allow 443/tcp
     sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
     curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
     curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
