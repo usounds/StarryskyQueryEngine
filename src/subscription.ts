@@ -23,6 +23,7 @@ export type record = {
     external?: {
       uri?: string
     }
+    $type? : string
   },
   labels:{
   }

@@ -106,7 +106,8 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
                 embedExternalUrl: req.body.embedExternalUrl,
                 inputType: req.body.inputType,
                 invetListUri: req.body.invetListUri,
-                enableExactMatch: req.body.enableExactMatch
+                enableExactMatch: req.body.enableExactMatch,
+                videoControl: req.body.videoControl,
             }
 
             ctx.db
@@ -181,6 +182,7 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
                     inputType: obj.inputType,
                     invetListUri: obj.invetListUri,
                     enableExactMatch: obj.enableExactMatch,
+                    videoControl: obj.videoControl,
                     queryEngineVersion: appVersion(),
                     timeUs: time_us
                 }

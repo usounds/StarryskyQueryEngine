@@ -62,4 +62,20 @@ migrations['001'] = {
     await db.schema.dropTable('sub_state').execute()
     await db.schema.dropTable('conditions').execute()
   },
+  
+}
+
+migrations['002'] = {
+  async up(db: Kysely<unknown>) {
+    await db.schema
+      .alterTable('conditions')
+      .addColumn('videoControl', 'varchar')
+      .execute()
+  },
+  async down(db: Kysely<unknown>) {
+    await db.schema
+      .alterTable('conditions')
+      .dropColumn('videoControl')
+      .execute()
+  },
 }

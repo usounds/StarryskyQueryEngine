@@ -36,6 +36,7 @@ export interface Conditions {
     inputType: string;
     listUri: string;
     invetListUri: string;
+    videoControl: string;
 }
 
 
@@ -74,6 +75,7 @@ export async function getConditions(db: Database): Promise<Conditions[]> {
         inputType: row.inputType || 'query',
         listUri: row.listUri || '',
         invetListUri: row.invetListUri || '',
+        videoControl: row.videoControl || 'false',
     }))
 
     //console.log(conditions)
@@ -100,7 +102,7 @@ const addBoundaryForAlphabetWords = (input: string): string => {
         if (/^[A-Za-zÀ-ÿ0-9]+$/.test(part)) {
             //console.log(part+":アルファベット")
             // アルファベットと数字のみの単語であれば、前後に他のアルファベットや数字がないことを確認
-            return`\\b${part}\\b`; // ここでエスケープした正規表現を返す
+            return `\\b${part}\\b`; // ここでエスケープした正規表現を返す
         }
 
         // カタカナだけ
@@ -180,6 +182,13 @@ export async function checkRecord(condition: Conditions, record: record, did: st
         if (condition.imageOnly === 'imageOnly' && imageObject === undefined) {
             return false
         } else if (condition.imageOnly === 'textOnly' && imageObject !== undefined && imageObject.length > 0) {
+            return false
+        }
+
+        //動画フィルタ
+        if (condition.videoControl === 'videoOnly' && record.embed?.$type!=='app.bsky.embed.video') {
+            return false
+        } else if (condition.videoControl === 'textOnly' && record.embed?.$type==='app.bsky.embed.video') {
             return false
         }
 
