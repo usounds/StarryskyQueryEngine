@@ -17,6 +17,7 @@ export class WebSocketReceiver {
     private time_us: number = 0
     private previousTimeUs: number = 0; // 前回のtime_usを記録するための変数
     private reconnectInterval: number = 5000; // 再接続までの待機時間（ミリ秒
+    private count = 0
 
     constructor(url: string, public db: Database) {
         this.initialize();
@@ -117,6 +118,7 @@ export class WebSocketReceiver {
                 const type = event.commit.type
                 if (type === 'c') {
                     //console.log(this.formatTimestamp(event.time_us))
+                    this.count++
                     const post = event.commit.record as record
                     let conditions: Conditions[] = await getConditions(this.db);
 
@@ -184,7 +186,7 @@ export class WebSocketReceiver {
     }
 
     private async executeTask() {
-        console.log(`Websocket current time_us : ${this.formatTimestamp(this.time_us)} `);
+        console.log(`Websocket current time_us : ${this.formatTimestamp(this.time_us)}  count : ${this.count}`);
 
         if (this.time_us === 0) return;
 

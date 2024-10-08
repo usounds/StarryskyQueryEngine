@@ -101,6 +101,8 @@ export class FeedGenerator {
                 inputType: record.inputType,
                 invetListUri: record.invetListUri,
                 enableExactMatch: record.enableExactMatch,
+                videoControl:record.videoControl,
+                editorDid:record.editorDid,
                 recordCount: 0
               }
 

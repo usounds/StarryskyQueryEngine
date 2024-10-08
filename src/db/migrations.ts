@@ -71,11 +71,19 @@ migrations['002'] = {
       .alterTable('conditions')
       .addColumn('videoControl', 'varchar')
       .execute()
+    await db.schema
+      .alterTable('conditions')
+      .addColumn('editorDid', 'varchar')
+      .execute()
   },
   async down(db: Kysely<unknown>) {
     await db.schema
       .alterTable('conditions')
       .dropColumn('videoControl')
+      .execute()
+    await db.schema
+      .alterTable('conditions')
+      .dropColumn('editorDid')
       .execute()
   },
 }

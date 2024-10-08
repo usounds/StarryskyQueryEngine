@@ -11,7 +11,11 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
         console.log('Operation mode:updateQuery:' + req.body.key)
         const requestWebPasskey = req.headers['x-starrtsky-webpasskey']
 
-        if (process.env.EDIT_WEB_PASSKEY !== undefined && requestWebPasskey !== process.env.EDIT_WEB_PASSKEY) {
+        if (
+            process.env.EDIT_WEB_PASSKEY !== undefined &&
+            requestWebPasskey !== process.env.EDIT_WEB_PASSKEY &&
+            (process.env.SHARED_WEB_PASSKEY === undefined || requestWebPasskey !== process.env.SHARED_WEB_PASSKEY)
+        ) {
             res.sendStatus(401)
         } else {
 
@@ -128,7 +132,11 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
     router.post('/getQuery', async (req: express.Request, res) => {
         console.log('Operation mode:getQuery')
         const requestWebPasskey = req.headers['x-starrtsky-webpasskey']
-        if (process.env.EDIT_WEB_PASSKEY !== undefined && requestWebPasskey !== process.env.EDIT_WEB_PASSKEY) {
+        if (
+            process.env.EDIT_WEB_PASSKEY !== undefined &&
+            requestWebPasskey !== process.env.EDIT_WEB_PASSKEY &&
+            (process.env.SHARED_WEB_PASSKEY === undefined || requestWebPasskey !== process.env.SHARED_WEB_PASSKEY)
+        ) {
             res.sendStatus(401)
         } else {
             let conditionBuiler = ctx.db
@@ -141,13 +149,14 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
                 res.json({
                     result: 'NOT_FOUND',
                     message: 'Specified key not found. ' + req.body.key,
+                    serverOwnerDid: ctx.cfg.publisherDid,
                     queryEngineVersion: appVersion()
                 })
                 return
             }
 
             let time_us = ''
-            if(jetsrteam){
+            if (jetsrteam) {
                 time_us = jetsrteam.currentTimeUs()
             }
 
@@ -183,6 +192,8 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
                     invetListUri: obj.invetListUri,
                     enableExactMatch: obj.enableExactMatch,
                     videoControl: obj.videoControl,
+                    editorDid: obj.editorDid,
+                    serverOwnerDid: ctx.cfg.publisherDid,
                     queryEngineVersion: appVersion(),
                     timeUs: time_us
                 }
@@ -196,7 +207,11 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
     router.post('/getAllQuery', async (req: express.Request, res) => {
         console.log('Operation mode:getAllQuery')
         const requestWebPasskey = req.headers['x-starrtsky-webpasskey']
-        if (process.env.EDIT_WEB_PASSKEY !== undefined && requestWebPasskey !== process.env.EDIT_WEB_PASSKEY) {
+        if (
+            process.env.EDIT_WEB_PASSKEY !== undefined &&
+            requestWebPasskey !== process.env.EDIT_WEB_PASSKEY &&
+            (process.env.SHARED_WEB_PASSKEY === undefined || requestWebPasskey !== process.env.SHARED_WEB_PASSKEY)
+        ) {
             res.sendStatus(401)
         } else {
             let conditionBuiler = ctx.db
@@ -209,32 +224,35 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
                 res.json({
                     result: 'NOT_FOUND',
                     message: 'Specified key not found. ' + req.body.key,
+                    serverOwnerDid: ctx.cfg.publisherDid,
                     queryEngineVersion: appVersion()
                 })
                 return
             }
 
             let time_us = '0'
-            if(jetsrteam){
+            if (jetsrteam) {
                 time_us = jetsrteam.currentTimeUs()
             }
 
             let returnObj;
-            let feedInfo: { key: string; feedName: string; feedDescription: string ,recordName:string}[] = []; // `key` の型を指定
+            let feedInfo: { key: string; feedName: string; feedDescription: string, recordName: string, editorDid: string }[] = []; // `key` の型を指定
             for (let obj of confitionRes) {
                 feedInfo.push({
                     key: obj.key || '',
                     feedName: obj.feedName || '',
                     feedDescription: obj.feedDescription || '',
-                    recordName:obj.recordName||'',
+                    recordName: obj.recordName || '',
+                    editorDid: obj.editorDid || '',
                 });
             }
-            
+
             returnObj = {
                 result: "OK",
                 queryEngineVersion: appVersion(),
                 timeUs: time_us,
-                feeds:feedInfo,
+                feeds: feedInfo,
+                serverOwnerDid: ctx.cfg.publisherDid,
             }
             res.json(returnObj)
         }
@@ -280,13 +298,13 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
             res.sendStatus(401)
         } else {
 
-            try{
-            ctx.db
-                .deleteFrom('post')
-                .where('key', '=', req.body.key)
-                .where('uri', '=', req.body.aturi)
-                .execute()
-            }catch(e){
+            try {
+                ctx.db
+                    .deleteFrom('post')
+                    .where('key', '=', req.body.key)
+                    .where('uri', '=', req.body.aturi)
+                    .execute()
+            } catch (e) {
                 res.status(500).json({ result: 'ERROR', message: 'なんらかのエラーが発生しました' + e })
                 return
 
@@ -313,25 +331,25 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
 
 
             console.log(req.body)
-            try{
-            const postsToCreate = {
-                uri: req.body.aturi,
-                key: req.body.key,
-                cid: req.body.cid,
-                indexedAt: req.body.key.createdAt,
-                inputType: 'manual'
-            }
+            try {
+                const postsToCreate = {
+                    uri: req.body.aturi,
+                    key: req.body.key,
+                    cid: req.body.cid,
+                    indexedAt: req.body.key.createdAt,
+                    inputType: 'manual'
+                }
 
-            console.log(postsToCreate)
-            ctx.db
-                .insertInto('post')
-                .values(postsToCreate)
-                .onConflict(oc => oc.doNothing())
-                .execute()
-        }catch(e){
-            res.status(500).json({ result: 'ERROR', message: 'なんらかのエラーが発生しました' + e })
-            return
-        }
+                console.log(postsToCreate)
+                ctx.db
+                    .insertInto('post')
+                    .values(postsToCreate)
+                    .onConflict(oc => oc.doNothing())
+                    .execute()
+            } catch (e) {
+                res.status(500).json({ result: 'ERROR', message: 'なんらかのエラーが発生しました' + e })
+                return
+            }
 
         }
         const returnObj = {

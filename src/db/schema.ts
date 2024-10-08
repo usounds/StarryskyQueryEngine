@@ -49,4 +49,5 @@ export type Conditions = {
   invetListUri: string | null
   enableExactMatch: string | null
   videoControl: string | null
+  editorDid:string | null
 }

@@ -4,11 +4,9 @@ import { record, imageObject, getIsDuplicate } from '../subscription'
 import { AtpAgent } from '@atproto/api'
 import { Database } from '../db'
 
-
 const agent = new AtpAgent({
     service: 'https://api.bsky.app'
 })
-
 
 export interface Conditions {
     key: string;
@@ -38,7 +36,6 @@ export interface Conditions {
     invetListUri: string;
     videoControl: string;
 }
-
 
 export async function getConditions(db: Database): Promise<Conditions[]> {
     //console.log('getConditions')
