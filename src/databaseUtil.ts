@@ -112,6 +112,7 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
                 invetListUri: req.body.invetListUri,
                 enableExactMatch: req.body.enableExactMatch,
                 videoControl: req.body.videoControl,
+                editorDid:req.body.editorDid,
             }
 
             ctx.db
