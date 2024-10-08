@@ -79,6 +79,29 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
                 }
             }
 
+            if (requestWebPasskey === process.env.SHARED_WEB_PASSKEY) {
+
+                let conditionBuiler = ctx.db
+                    .selectFrom('conditions')
+                    .selectAll()
+                    .where('key', '=', req.body.key)
+                const confitionRes = await conditionBuiler.execute()
+
+                if (confitionRes.length == 0) {
+                    res.status(500).json({ result: 'SHARE_KEY_NOT_CREATE', message: 'シェアパスワードの場合、新規作成はできません' })
+                    return
+
+                }
+
+                if(confitionRes[0].editorDid !==  req.body.editorDid){
+                    res.status(500).json({ result: 'SHARE_KEY_NOT_EDIT', message: 'シェアパスワードの場合、編集者項目は編集できません' })
+                    return
+
+
+                }
+
+            }
+
             ctx.db
                 .deleteFrom('conditions')
                 .where('key', '=', req.body.key)
@@ -112,7 +135,7 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
                 invetListUri: req.body.invetListUri,
                 enableExactMatch: req.body.enableExactMatch,
                 videoControl: req.body.videoControl,
-                editorDid:req.body.editorDid,
+                editorDid: req.body.editorDid,
             }
 
             ctx.db
