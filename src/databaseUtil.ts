@@ -318,7 +318,11 @@ const makeRouter = (ctx: AppContext, jetsrteam: WebSocketReceiver) => {
         console.log('Operation mode:deletePost:key[' + req.body.key + '] AT-Uri[' + req.body.aturi + ']')
         const requestWebPasskey = req.headers['x-starrtsky-webpasskey']
 
-        if (process.env.EDIT_WEB_PASSKEY !== undefined && requestWebPasskey !== process.env.EDIT_WEB_PASSKEY) {
+        if (
+            process.env.EDIT_WEB_PASSKEY !== undefined &&
+            requestWebPasskey !== process.env.EDIT_WEB_PASSKEY &&
+            (process.env.SHARED_WEB_PASSKEY === undefined || requestWebPasskey !== process.env.SHARED_WEB_PASSKEY)
+        ) {
             res.sendStatus(401)
         } else {
 
