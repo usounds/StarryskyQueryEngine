@@ -2,10 +2,11 @@ import dotenv from 'dotenv'
 import { AtpAgent } from '@atproto/api'
 import { QueryParams as QueryParamsSearch } from './lexicon/types/app/bsky/feed/searchPosts'
 import { Database } from './db'
-import { PostView } from './lexicon/types/app/bsky/feed/defs'
 import * as pkg from "../package.json"
+import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs';
 
-import { Conditions,checkRecord,getConditions } from './util/conditionsCheck'
+import { Conditions,checkRecord,getConditions,checkLabel } from './util/conditionsCheck'
+import { sessionCheck } from './util/atpAgentWrapper'
 
 let conditions: Conditions[]
 
@@ -40,15 +41,10 @@ export type imageObject = {
 }
 
 export class ScpecificActorsSubscription {
-  agent: AtpAgent
 
   private isReloading: boolean = false;
 
-  constructor(public db: Database) {
-    this.agent = new AtpAgent({
-      service: 'https://api.bsky.app'
-    })
-
+  constructor(public db: Database, public agent:AtpAgent) {
   }
 
   async run() {
@@ -153,11 +149,13 @@ export class ScpecificActorsSubscription {
         }
 
         this.agent.configureLabelers(labelerDid)
+        
+        await sessionCheck(this.agent)
 
         //初回起動モードは既定の件数まで処理を継続
         //差分起動モードは前回の実行に追いつくまで処理を継続
         //ただし、API検索が100回に到達する、または、APIの検索が終了した場合は処理を止める
-        while (((!init && !catchUp && obj.inputType!=='jetstream') || (init && recordcount < initCount)) && cursor % 100 == 0 && apiCall < 100) {
+        while (obj.inputType==='query' && ((!init && !catchUp) || (init && recordcount < initCount)) && cursor % 100 == 0 && apiCall < 100) {
           //検索API実行
           const params_search: QueryParamsSearch = {
             q: searchQuery,
@@ -252,6 +250,12 @@ export class ScpecificActorsSubscription {
               continue
             }
 */
+            const checkLabelResult = await checkLabel(obj, post)
+            if (!checkLabelResult) {
+              continue
+            }
+
+            /*
             //ラベルの仕分け
             let officialLabels: string[] = []
             let customLabels: string[] = []
@@ -291,6 +295,7 @@ export class ScpecificActorsSubscription {
             }
 
             if (skip) continue
+            */
 
 
             /*

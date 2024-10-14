@@ -3,6 +3,8 @@
 import { record, imageObject, getIsDuplicate } from '../subscription'
 import { AtpAgent } from '@atproto/api'
 import { Database } from '../db'
+import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs';
+import * as ComAtprotoLabelDefs from '..'
 
 const agent = new AtpAgent({
     service: 'https://api.bsky.app'
@@ -275,4 +277,48 @@ export async function checkRecord(condition: Conditions, record: record, did: st
     }
 
     return true
+}
+
+
+export async function checkLabel(condition: Conditions, post: PostView){
+
+   //ラベルの仕分け
+   let officialLabels: string[] = []
+   let customLabels: string[] = []
+
+   if (post.labels) {
+     // seachResults.data.posts[0].labels配列の各要素に対して処理を行う
+     post.labels.map((label: any) => {
+       // 後付けラベル
+       if (label.ver) {
+         // 公式ラベラー
+         if (label.src === 'did:plc:ar7c4by46qjdydhdevvrndac') {
+           officialLabels.push(label.val)
+         } else {
+           // カスタムラベラー
+           customLabels.push(label.val)
+         }
+       } else {
+         // セルフラベル
+         officialLabels.push(label.val + '(self)');
+       }
+     })
+   }
+
+   //公式ラベルが有効な場合は、ラベルが何かついていたら除外
+   if (condition.labelDisable === "true" && officialLabels.length !== 0) {
+     return false
+   }
+
+   //カスタムラベラーのラベルに値があれば比較する
+   let skip = false
+   if (condition.customLabelerDid) {
+     const labels: string[] = condition.customLabelerLabelValues.split(',')
+     if (getIsDuplicate(labels, customLabels)) {
+       skip = true
+       return false
+     }
+   }
+
+   return true
 }

@@ -3,8 +3,10 @@ import { Server } from '../lexicon'
 import { AppContext } from '../config'
 import { AtUri } from '@atproto/syntax'
 import handler from '../algos/starrysky'
+import { AtpAgent } from '@atproto/api'
 
-export default function (server: Server, ctx: AppContext) {
+
+export default function (server: Server, ctx: AppContext, agent:AtpAgent) {
   server.app.bsky.feed.getFeedSkeleton(async ({ params, req }) => {
     const feedUri = new AtUri(params.feed)
     console.debug(params)
@@ -30,7 +32,7 @@ export default function (server: Server, ctx: AppContext) {
      * )
      */
 
-    const body = await handler(ctx, params,feedUri.rkey,req)
+    const body = await handler(ctx, params,feedUri.rkey,req,agent)
     return {
       encoding: 'application/json',
       body: body,

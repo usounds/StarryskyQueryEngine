@@ -14,6 +14,9 @@ import { WebSocketReceiver } from './jerstream'
 import fetch from 'node-fetch'
 import * as pkg from "../package.json"
 import { Conditions, getConditions } from './util/conditionsCheck'
+import { AtpAgent } from '@atproto/api'
+
+import { sessionCheck } from './util/atpAgentWrapper'
 
 export function appVersion(): string {
   return pkg.version;
@@ -26,6 +29,9 @@ export class FeedGenerator {
   public db: Database
   public actorsfeed: ScpecificActorsSubscription
   public cfg: Config
+  public agent : AtpAgent= new AtpAgent({
+    service: 'https://bsky.social'
+  })
 
   constructor(
     app: express.Application,
@@ -43,6 +49,10 @@ export class FeedGenerator {
     const app = express()
     const db = await createDb(cfg.sqliteLocation)
     await migrateToLatest(db);  // データベースのマイグレーションを実行
+
+    const agent : AtpAgent= new AtpAgent({
+      service: 'https://bsky.social'
+    }) 
 
     //Admin Console経由でD1に保存された検索条件を取得
     const adminConsoleEndpoint = process.env.STARRYSKY_ADMIN_CONSOLE || 'https://starrysky-console.pages.dev'
@@ -130,7 +140,8 @@ export class FeedGenerator {
     }
 
     // const firehose = new FirehoseSubscription(db, cfg.subscriptionEndpoint)
-    const actorsfeed = new ScpecificActorsSubscription(db)
+    await sessionCheck(agent)
+    const actorsfeed = new ScpecificActorsSubscription(db,agent)
 
     const didCache = new MemoryCache()
     const didResolver = new DidResolver({
@@ -161,7 +172,7 @@ export class FeedGenerator {
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
 
-    feedGeneration(server, ctx)
+    feedGeneration(server, ctx,agent)
     describeGenerator(server, ctx)
     app.use(server.xrpc.router)
     app.use(wellKnown(ctx))
