@@ -312,11 +312,9 @@ export async function checkLabel(condition: Conditions, post: PostView){
    }
 
    //カスタムラベラーのラベルに値があれば比較する
-   let skip = false
    if (condition.customLabelerDid) {
      const labels: string[] = condition.customLabelerLabelValues.split(',')
      if (getIsDuplicate(labels, customLabels)) {
-       skip = true
        return false
      }
    }
