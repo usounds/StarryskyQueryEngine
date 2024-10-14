@@ -97,7 +97,6 @@ export const handler = async (ctx: AppContext, params: QueryParams, rkey: string
         limit: 100,
         cursor: cursor
       }
-      console.log(condition)
 
       //公式ラベラーをデフォルトセット
       let labelerDid: string[] = ['did:plc:ar7c4by46qjdydhdevvrndac']
