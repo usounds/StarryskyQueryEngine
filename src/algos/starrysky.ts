@@ -104,15 +104,18 @@ export const handler = async (ctx: AppContext, params: QueryParams, rkey: string
         currentCursor ++ 
 
         const record = obj.record as record
-        let check = checkRecord(condition,record,obj.author.did, new Map<string, string>)
+        let check = await checkRecord(condition,record,obj.author.did, new Map<string, string>)
         if (!check) {
           continue
         }
 
-        const check2 = await checkLabel(condition, obj)
+        let check2 = await checkLabel(condition, obj)
         if (!check2) {
           continue
         }
+
+        console.log('------------record.text------------')
+        console.log(record.text)
 
         feed.push({
           post: obj.uri,
