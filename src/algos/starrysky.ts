@@ -97,7 +97,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, rkey: string
         limit: 100,
         cursor: cursor
       }
-      console.log(params_search)
+      console.log(condition)
       const seachResults = await agent.app.bsky.feed.searchPosts(params_search)
 
       for(let obj of seachResults.data.posts){

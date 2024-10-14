@@ -165,6 +165,8 @@ export async function checkRecord(condition: Conditions, record: record, did: st
             //            console.log(text)
             //            console.log(text.match(inputRegexExp))
         }
+        console.log(inputRegexExp)
+        console.log(text.match(inputRegexExp) )
 
         //埋め込みURL
         if (condition.embedExternalUrl === 'true' && record.embed?.external?.uri) {
