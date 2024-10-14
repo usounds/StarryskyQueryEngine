@@ -114,8 +114,8 @@ export const handler = async (ctx: AppContext, params: QueryParams, rkey: string
           continue
         }
 
-        console.log('------------record.text------------')
-        console.log(record.text)
+//        console.log('------------record.text------------')
+//        console.log(record.text)
 
         feed.push({
           post: obj.uri,

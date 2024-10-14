@@ -162,9 +162,9 @@ export async function checkRecord(condition: Conditions, record: record, did: st
         if (matches == 0) {
             return false
         } else {
-            console.log('regext直後')
-                        console.log(text)
-                        console.log(text.match(inputRegexExp))
+//            console.log('regext直後')
+//            console.log(text)
+//            console.log(text.match(inputRegexExp))
         }
 
         //埋め込みURL
