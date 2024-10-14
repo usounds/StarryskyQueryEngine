@@ -5,21 +5,21 @@ export async function sessionCheck(agent: AtpAgent): Promise<void> {
     // 2回目
     try {
         // セッションチェック
-        console.log("2回目以降")
+        console.log("sessionCheck")
         await agent.com.atproto.server.getSession()
-        console.log("2回目以降 - セッション生きてた")
         return
 
     } catch (e) {
         try {
-            console.log("2回目以降 - セッション死んでいる")
+            console.log("セッション死んでいる")
             await agent.com.atproto.server.refreshSession()
         } catch (e) {
-            console.log("2回目以降 - ログイン")
+            console.log("リフレッシュ失敗 - ログイン")
             await agent.login({
                 identifier: process.env.FEEDGEN_PUBLISHER_IDENTIFIER || '',
                 password: process.env.FEEDGEN_APP_PASSWORD || ''
             })
+            console.log("ログイン成功")
 
             return
 
