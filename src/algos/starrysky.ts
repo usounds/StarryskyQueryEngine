@@ -8,7 +8,7 @@ import { AtpAgent } from '@atproto/api'
 import { QueryParams as QueryParamsSearch } from '../lexicon/types/app/bsky/feed/searchPosts'
 
 
-import { record} from '../subscription'
+import { record } from '../subscription'
 
 // max 15 chars
 export const shortname = 'starrysky'
@@ -89,7 +89,7 @@ export const handler = async (ctx: AppContext, params: QueryParams, rkey: string
     let currentCursor = 0
 
     do {
-      if(!cursor){
+      if (!cursor) {
         cursor = params.cursor || '0'
       }
       const params_search: QueryParamsSearch = {
@@ -98,13 +98,24 @@ export const handler = async (ctx: AppContext, params: QueryParams, rkey: string
         cursor: cursor
       }
       console.log(condition)
+
+      //公式ラベラーをデフォルトセット
+      let labelerDid: string[] = ['did:plc:ar7c4by46qjdydhdevvrndac']
+
+      //カスタムラベラーが入力されていたらセット
+      if (condition.customLabelerDid) {
+        labelerDid.push(condition.customLabelerDid)
+
+      }
+
+      agent.configureLabelers(labelerDid)
       const seachResults = await agent.app.bsky.feed.searchPosts(params_search)
 
-      for(let obj of seachResults.data.posts){
-        currentCursor ++ 
+      for (let obj of seachResults.data.posts) {
+        currentCursor++
 
         const record = obj.record as record
-        let check = await checkRecord(condition,record,obj.author.did, new Map<string, string>)
+        let check = await checkRecord(condition, record, obj.author.did, new Map<string, string>)
         if (!check) {
           continue
         }
@@ -114,27 +125,27 @@ export const handler = async (ctx: AppContext, params: QueryParams, rkey: string
           continue
         }
 
-//        console.log('------------record.text------------')
-//        console.log(record.text)
+        //        console.log('------------record.text------------')
+        //        console.log(record.text)
 
         feed.push({
           post: obj.uri,
         })
 
-        if (feed.length >=params.limit) {
+        if (feed.length >= params.limit) {
           break
         }
 
       }
 
-      if (feed.length >=params.limit) {
+      if (feed.length >= params.limit) {
         break
       }
 
       cursor = seachResults.data.cursor
-      
-    } while (1) 
-      cursor =(currentCursor + Number(cursor||'0')).toString()
+
+    } while (1)
+    cursor = (currentCursor + Number(cursor || '0')).toString()
   }
 
   return {
