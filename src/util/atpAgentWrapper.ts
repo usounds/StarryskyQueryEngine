@@ -15,11 +15,16 @@ export async function sessionCheck(agent: AtpAgent): Promise<void> {
             await agent.com.atproto.server.refreshSession()
         } catch (e) {
             console.log("リフレッシュ失敗 - ログイン")
-            await agent.login({
-                identifier: process.env.FEEDGEN_PUBLISHER_IDENTIFIER || '',
-                password: process.env.FEEDGEN_APP_PASSWORD || ''
-            })
-            console.log("ログイン成功")
+            if (process.env.FEEDGEN_PUBLISHER_IDENTIFIER && process.env.FEEDGEN_APP_PASSWORD) {
+                await agent.login({
+                    identifier: process.env.FEEDGEN_PUBLISHER_IDENTIFIER || '',
+                    password: process.env.FEEDGEN_APP_PASSWORD || ''
+                })
+                console.log("ログイン成功")
+            }else{
+                console.log("ユーザーパスワード未指定")
+
+            }
 
             return
 
