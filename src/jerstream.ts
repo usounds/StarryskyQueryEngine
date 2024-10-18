@@ -25,7 +25,7 @@ export class WebSocketReceiver {
     }
 
     private async initialize() {
-        this.host = 'wss://jetstream.atproto.tools'
+        this.host = 'wss://jetstream2.us-west.bsky.network'
 
         if (this.time_us === 0) {
 
