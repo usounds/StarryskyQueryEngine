@@ -149,6 +149,12 @@ export class ScpecificActorsSubscription {
         }
 
         this.agent.configureLabelers(labelerDid)
+
+        // jetstreamで2回目以降は処理をスキップ
+        if(obj.inputType==='jetstream' && !init ) continue
+
+        //basicは処理をスキップ
+        if(obj.inputType==='basic') continue
         
         await sessionCheck(this.agent)
 
